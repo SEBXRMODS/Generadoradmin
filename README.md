@@ -31,6 +31,7 @@ background:#111a2e;
 padding:30px;
 border-radius:12px;
 width:330px;
+box-shadow:0 0 30px rgba(0,0,0,.4);
 }
 
 input,
@@ -41,6 +42,8 @@ margin-top:10px;
 border:none;
 border-radius:6px;
 box-sizing:border-box;
+background:#0f172a;
+color:white;
 }
 
 button{
@@ -52,6 +55,8 @@ border-radius:6px;
 background:#3b82f6;
 color:white;
 cursor:pointer;
+font-weight:bold;
+transition:.2s;
 }
 
 button:hover{
@@ -73,6 +78,7 @@ background:#111a2e;
 padding:15px;
 border-radius:10px;
 margin-top:10px;
+box-shadow:0 0 20px rgba(0,0,0,.2);
 }
 
 .grid{
@@ -99,17 +105,32 @@ opacity:.7;
 border:2px solid red;
 }
 
+.actions{
+display:grid;
+gap:8px;
+margin-top:10px;
+}
+
+h2,h3{
+margin:0;
+margin-bottom:10px;
+}
+
 </style>
 
 </head>
 
 <body>
 
+<!-- LOGIN -->
+
 <div id="login">
 
 <div class="box">
 
-<h2>Admin Login</h2>
+<h2>
+🔐 Admin Login
+</h2>
 
 <input
 id="email"
@@ -131,9 +152,15 @@ Entrar
 
 </div>
 
+<!-- DASHBOARD -->
+
 <div id="dash">
 
 <h2 id="welcome"></h2>
+
+<button id="logoutBtn">
+Cerrar sesión
+</button>
 
 <div class="grid">
 
@@ -154,14 +181,22 @@ Entrar
 
 </div>
 
+<!-- GENERAR KEY -->
+
 <div class="card">
 
-<h3>Generar Key</h3>
+<h3>
+Generar Key
+</h3>
 
 <select id="duration">
 
 <option value="1">
 1 día
+</option>
+
+<option value="3">
+3 días
 </option>
 
 <option value="7">
@@ -179,28 +214,36 @@ Entrar
 </select>
 
 <button id="createKeyBtn">
-Generar
+Generar Key
 </button>
 
 <p id="newKey"></p>
 
 </div>
 
+<!-- KEYS -->
+
 <div class="card">
 
-<h3>Mis Keys</h3>
+<h3>
+Mis Keys
+</h3>
 
 <div id="keysList"></div>
 
 </div>
 
+<!-- BAN -->
+
 <div class="card">
 
-<h3>Banear dispositivo</h3>
+<h3>
+Banear Dispositivo
+</h3>
 
 <input
 id="banDevice"
-placeholder="device-id">
+placeholder="DEV-XXXX">
 
 <button id="banBtn">
 Banear
@@ -208,9 +251,13 @@ Banear
 
 </div>
 
+<!-- LOGS -->
+
 <div class="card">
 
-<h3>Logs</h3>
+<h3>
+Logs
+</h3>
 
 <div id="logs"></div>
 
@@ -230,7 +277,8 @@ import {
 
 getAuth,
 signInWithEmailAndPassword,
-onAuthStateChanged
+onAuthStateChanged,
+signOut
 
 }
 
@@ -252,6 +300,8 @@ update
 from
 
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* FIREBASE */
 
 const firebaseConfig = {
 
@@ -282,6 +332,8 @@ getDatabase(app);
 
 let currentUID = "";
 
+/* LOGIN */
+
 async function login(){
 
 const email =
@@ -304,8 +356,6 @@ password
 
 }catch(err){
 
-console.log(err);
-
 document.getElementById(
 "error"
 ).innerHTML =
@@ -314,6 +364,26 @@ err.message;
 }
 
 }
+
+/* LOGOUT */
+
+async function logout(){
+
+await signOut(auth);
+
+document.getElementById(
+"dash"
+).style.display =
+"none";
+
+document.getElementById(
+"login"
+).style.display =
+"flex";
+
+}
+
+/* AUTH */
 
 onAuthStateChanged(
 auth,
@@ -340,8 +410,7 @@ user.email.split("@")[0];
 document.getElementById(
 "welcome"
 ).innerHTML =
-
-"Bienvenido " + name;
+"👋 Bienvenido " + name;
 
 loadKeys();
 
@@ -352,6 +421,8 @@ loadLogs();
 }
 
 });
+
+/* GENERAR KEY */
 
 function generateKey(){
 
@@ -384,6 +455,8 @@ return result;
 
 }
 
+/* CREAR KEY */
+
 async function createKey(){
 
 const days =
@@ -406,32 +479,22 @@ generateKey();
 await set(
 
 ref(
-
 db,
-
 "users/" +
 currentUID +
 "/keys/" +
 key
-
 ),
 
 {
 
 key:key,
-
 days:days,
-
 createdAt:now,
-
 expiresAt:expiresAt,
-
 used:false,
-
 usedBy:"",
-
 active:true,
-
 shared:false
 
 }
@@ -441,13 +504,15 @@ shared:false
 document.getElementById(
 "newKey"
 ).innerHTML =
-key;
+"✅ " + key;
 
 loadKeys();
 
 loadStats();
 
 }
+
+/* ACTIVAR / DESACTIVAR */
 
 async function toggleKey(key, active){
 
@@ -471,6 +536,75 @@ loadKeys();
 
 }
 
+/* AÑADIR TIEMPO */
+
+async function addTime(key, days){
+
+const keyRef =
+ref(
+db,
+"users/" +
+currentUID +
+"/keys/" +
+key
+);
+
+const snapshot =
+await get(keyRef);
+
+if(!snapshot.exists()) return;
+
+const data =
+snapshot.val();
+
+const newExpire =
+data.expiresAt +
+(days * 86400000);
+
+await update(
+
+keyRef,
+
+{
+expiresAt:newExpire
+}
+
+);
+
+loadKeys();
+
+}
+
+/* RESET DEVICE */
+
+async function resetDevice(key){
+
+await update(
+
+ref(
+db,
+"users/" +
+currentUID +
+"/keys/" +
+key
+),
+
+{
+
+used:false,
+usedBy:"",
+shared:false
+
+}
+
+);
+
+loadKeys();
+
+}
+
+/* LOAD KEYS */
+
 async function loadKeys(){
 
 const list =
@@ -484,13 +618,10 @@ const snapshot =
 await get(
 
 child(
-
 ref(db),
-
 "users/" +
 currentUID +
 "/keys"
-
 )
 
 );
@@ -560,6 +691,8 @@ k.active
 
 </div>
 
+<div class="actions">
+
 <button
 onclick="toggleKey('${k.key}', ${k.active})">
 
@@ -571,6 +704,28 @@ k.active
 
 </button>
 
+<button
+onclick="addTime('${k.key}', 1)">
++1 Día
+</button>
+
+<button
+onclick="addTime('${k.key}', 3)">
++3 Días
+</button>
+
+<button
+onclick="addTime('${k.key}', 7)">
++7 Días
+</button>
+
+<button
+onclick="resetDevice('${k.key}')">
+🔄 Reset Device
+</button>
+
+</div>
+
 `;
 
 list.appendChild(div);
@@ -581,6 +736,8 @@ list.appendChild(div);
 
 }
 
+/* STATS */
+
 async function loadStats(){
 
 let total = 0;
@@ -588,17 +745,12 @@ let shared = 0;
 
 const snapshot =
 await get(
-
 child(
-
 ref(db),
-
 "users/" +
 currentUID +
 "/keys"
-
 )
-
 );
 
 if(snapshot.exists()){
@@ -651,6 +803,8 @@ onlineSnap.val()
 
 }
 
+/* LOGS */
+
 async function loadLogs(){
 
 const logs =
@@ -701,6 +855,8 @@ logs.appendChild(div);
 
 }
 
+/* BAN DEVICE */
+
 async function banDevice(){
 
 const device =
@@ -711,12 +867,9 @@ document.getElementById(
 await set(
 
 ref(
-
 db,
-
 "bannedDevices/" +
 device
-
 ),
 
 true
@@ -724,10 +877,12 @@ true
 );
 
 alert(
-"Dispositivo baneado"
+"🚫 Dispositivo baneado"
 );
 
 }
+
+/* BUTTONS */
 
 window.onload = () => {
 
@@ -738,6 +893,15 @@ document
 .addEventListener(
 "click",
 login
+);
+
+document
+.getElementById(
+"logoutBtn"
+)
+.addEventListener(
+"click",
+logout
 );
 
 document
@@ -760,8 +924,16 @@ banDevice
 
 };
 
+/* GLOBAL */
+
 window.toggleKey =
 toggleKey;
+
+window.addTime =
+addTime;
+
+window.resetDevice =
+resetDevice;
 
 </script>
 
