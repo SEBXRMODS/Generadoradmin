@@ -16,7 +16,6 @@ body {
   height: 100vh;
 }
 
-/* LOGIN */
 .login, .panel {
   background: #020617;
   padding: 30px;
@@ -69,7 +68,6 @@ button:hover {
 
 <body>
 
-<!-- LOGIN -->
 <div class="login" id="loginBox">
   <h2>Login Admin</h2>
   <input type="text" id="user" placeholder="Usuario">
@@ -78,15 +76,18 @@ button:hover {
   <p id="error"></p>
 </div>
 
-<!-- PANEL -->
 <div class="panel hidden" id="panelBox">
   <h2>Generador de Keys</h2>
 
   <select id="duracion">
     <option value="1">1 día</option>
     <option value="2">2 días</option>
+    <option value="3">3 días</option>
+    <option value="4">4 días</option>
+    <option value="5">5 días</option>
+    <option value="6">6 días</option>
     <option value="7">7 días</option>
-    <option value="8">8 días</option>
+    <option value="14">2 semanas</option>
     <option value="30">1 mes</option>
     <option value="365">1 año</option>
   </select>
@@ -98,10 +99,12 @@ button:hover {
 </div>
 
 <script>
-// 🔐 LOGIN SIMULADO
-const ADMIN_USER = "karen";
-const ADMIN_PASS = "2526";
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "1234";
 
+let intervalo = null;
+
+// LOGIN
 function login() {
   const u = document.getElementById("user").value;
   const p = document.getElementById("pass").value;
@@ -119,7 +122,7 @@ function logout() {
   document.getElementById("loginBox").classList.remove("hidden");
 }
 
-// 🔑 GENERADOR DE KEYS
+// GENERAR KEY
 function generarKey() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -134,18 +137,57 @@ function generarKey() {
   return `${bloque()}-${bloque()}-${bloque()}`;
 }
 
+// FORMATO TIEMPO
+function formatearTiempo(ms) {
+  let segundos = Math.floor(ms / 1000);
+
+  const dias = Math.floor(segundos / (3600 * 24));
+  segundos %= (3600 * 24);
+
+  const horas = Math.floor(segundos / 3600);
+  segundos %= 3600;
+
+  const minutos = Math.floor(segundos / 60);
+  segundos %= 60;
+
+  return `${dias}d ${horas}h ${minutos}m ${segundos}s`;
+}
+
+// GENERAR + CONTADOR
 function generar() {
-  const dias = document.getElementById("duracion").value;
+  if (intervalo) clearInterval(intervalo);
+
+  const select = document.getElementById("duracion");
+  const dias = parseInt(select.value);
+  const texto = select.options[select.selectedIndex].text;
+
   const key = generarKey();
+
+  const ahora = new Date();
+  const expiracion = new Date(ahora.getTime() + dias * 24 * 60 * 60 * 1000);
 
   const resultado = document.getElementById("resultado");
 
   resultado.innerHTML = `
     <div class="key-box">
       KEY: ${key} <br>
-      DURACIÓN: ${dias} días
+      DURACIÓN: ${texto} <br>
+      EXPIRA EN: <span id="contador"></span>
     </div>
   `;
+
+  intervalo = setInterval(() => {
+    const ahora = new Date();
+    const restante = expiracion - ahora;
+
+    if (restante <= 0) {
+      document.getElementById("contador").innerText = "⛔ Expirada";
+      clearInterval(intervalo);
+      return;
+    }
+
+    document.getElementById("contador").innerText = formatearTiempo(restante);
+  }, 1000);
 }
 </script>
 
