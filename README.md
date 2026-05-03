@@ -71,6 +71,8 @@ window.login = async function () {
     document.getElementById("error").innerText =
       err.message;
 
+    console.error(err);
+
   }
 
 };
@@ -135,6 +137,8 @@ window.createKey = async function () {
 
   try {
 
+    console.log("iniciando createKey");
+
     const days = parseInt(
       document.getElementById("duration").value
     );
@@ -145,6 +149,8 @@ window.createKey = async function () {
       now + (days * 24 * 60 * 60 * 1000);
 
     const newKey = genKey();
+
+    console.log("key generada:", newKey);
 
     const keyData = {
 
@@ -162,11 +168,14 @@ window.createKey = async function () {
 
     };
 
-    /* GUARDAR */
+    console.log("intentando guardar");
+
     await set(
       ref(db, "keys/" + newKey),
       keyData
     );
+
+    console.log("guardado correctamente");
 
     document.getElementById("newKey").innerHTML =
       "KEY: <b>" + newKey + "</b>";
@@ -174,6 +183,8 @@ window.createKey = async function () {
     loadKeys();
 
   } catch (err) {
+
+    console.error("ERROR:", err);
 
     alert(err.message);
 
@@ -184,58 +195,74 @@ window.createKey = async function () {
 /* CARGAR KEYS */
 async function loadKeys() {
 
-  const list =
-    document.getElementById("list");
+  try {
 
-  list.innerHTML = "";
+    const list =
+      document.getElementById("list");
 
-  const dbRef = ref(db);
+    list.innerHTML = "";
 
-  const snapshot = await get(
-    child(dbRef, "keys")
-  );
+    const dbRef = ref(db);
 
-  if (snapshot.exists()) {
+    console.log("cargando keys");
 
-    const data = snapshot.val();
+    const snapshot = await get(
+      child(dbRef, "keys")
+    );
 
-    Object.values(data).forEach(k => {
+    if (snapshot.exists()) {
 
-      const div =
-        document.createElement("div");
+      console.log("keys encontradas");
 
-      div.className = "item";
+      const data = snapshot.val();
 
-      const exp =
-        new Date(k.expiresAt);
+      Object.values(data).forEach(k => {
 
-      const expired =
-        Date.now() > k.expiresAt;
+        const div =
+          document.createElement("div");
 
-      div.innerHTML = `
+        div.className = "item";
 
-        <b>${k.key}</b>
+        const exp =
+          new Date(k.expiresAt);
 
-        <div class="small">
-          ${k.days} días
-        </div>
+        const expired =
+          Date.now() > k.expiresAt;
 
-        <div class="small">
-          Expira:
-          ${exp.toLocaleString()}
-        </div>
+        div.innerHTML = `
 
-        <div class="status">
-          ${expired
-            ? "❌ EXPIRADA"
-            : "✅ ACTIVA"}
-        </div>
+          <b>${k.key}</b>
 
-      `;
+          <div class="small">
+            ${k.days} días
+          </div>
 
-      list.appendChild(div);
+          <div class="small">
+            Expira:
+            ${exp.toLocaleString()}
+          </div>
 
-    });
+          <div class="status">
+            ${expired
+              ? "❌ EXPIRADA"
+              : "✅ ACTIVA"}
+          </div>
+
+        `;
+
+        list.appendChild(div);
+
+      });
+
+    } else {
+
+      console.log("no hay keys");
+
+    }
+
+  } catch (err) {
+
+    console.error(err);
 
   }
 
