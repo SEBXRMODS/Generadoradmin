@@ -1,8 +1,1 @@
-<script type="module">
-
-import { initializeApp } from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-console.log("firebase cargó");
-
-</script>
+<h1>FUNCIONA</h1>
