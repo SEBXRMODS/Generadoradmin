@@ -48,6 +48,10 @@ button {
   cursor: pointer;
 }
 
+button:hover {
+  background: #2563eb;
+}
+
 #dash {
   display: none;
   padding: 20px;
@@ -87,14 +91,21 @@ button {
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
+
   <div class="box">
 
     <h2>Admin Login</h2>
 
-    <input id="user" placeholder="Email">
+    <input
+      id="user"
+      placeholder="Email">
 
-    <input id="pass" type="password" placeholder="Contraseña">
+    <input
+      id="pass"
+      type="password"
+      placeholder="Contraseña">
 
     <button onclick="login()">
       Entrar
@@ -103,8 +114,10 @@ button {
     <p id="error"></p>
 
   </div>
+
 </div>
 
+<!-- DASHBOARD -->
 <div id="dash">
 
   <h2>Panel SaaS</h2>
@@ -115,16 +128,33 @@ button {
 
   <div class="panel">
 
+    <!-- CREAR -->
     <div class="section">
 
       <h3>Crear Key</h3>
 
       <select id="duration">
-        <option value="1">1 día</option>
-        <option value="7">7 días</option>
-        <option value="14">2 semanas</option>
-        <option value="30">1 mes</option>
-        <option value="365">1 año</option>
+
+        <option value="1">
+          1 día
+        </option>
+
+        <option value="7">
+          7 días
+        </option>
+
+        <option value="14">
+          2 semanas
+        </option>
+
+        <option value="30">
+          1 mes
+        </option>
+
+        <option value="365">
+          1 año
+        </option>
+
       </select>
 
       <button onclick="createKey()">
@@ -135,6 +165,7 @@ button {
 
     </div>
 
+    <!-- LISTA -->
     <div class="section">
 
       <h3>Keys</h3>
@@ -149,16 +180,17 @@ button {
 
 <script type="module">
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+/* IMPORTS */
+import { initializeApp } from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getAuth,
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
   getDatabase,
@@ -166,31 +198,36 @@ import {
   set,
   get,
   child
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 /* FIREBASE CONFIG */
 const firebaseConfig = {
 
-  apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
+  apiKey:
+  "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
 
-  authDomain: "panelsebxrmods.firebaseapp.com",
+  authDomain:
+  "panelsebxrmods.firebaseapp.com",
 
   databaseURL:
-    "https://panelsebxrmods-default-rtdb.firebaseio.com",
+  "https://panelsebxrmods-default-rtdb.firebaseio.com",
 
-  projectId: "panelsebxrmods",
+  projectId:
+  "panelsebxrmods",
 
   storageBucket:
-    "panelsebxrmods.firebasestorage.app",
+  "panelsebxrmods.firebasestorage.app",
 
-  messagingSenderId: "717339227525",
+  messagingSenderId:
+  "717339227525",
 
   appId:
-    "1:717339227525:web:e3ee653c3d2aeb1b5800ec"
+  "1:717339227525:web:e3ee653c3d2aeb1b5800ec"
 
 };
 
+/* INIT */
 const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
@@ -225,28 +262,44 @@ window.login = async function () {
 
 };
 
-/* SESSION */
-onAuthStateChanged(auth, user => {
+/* ESPERAR HTML */
+window.addEventListener(
+  "DOMContentLoaded",
+  () => {
 
-  if (user) {
+  onAuthStateChanged(auth, user => {
 
-    document.getElementById("login").style.display =
-      "none";
+    const loginDiv =
+      document.getElementById("login");
 
-    document.getElementById("dash").style.display =
-      "block";
+    const dashDiv =
+      document.getElementById("dash");
 
-    loadKeys();
+    if (!loginDiv || !dashDiv) {
+      return;
+    }
 
-  } else {
+    if (user) {
 
-    document.getElementById("login").style.display =
-      "flex";
+      loginDiv.style.display =
+        "none";
 
-    document.getElementById("dash").style.display =
-      "none";
+      dashDiv.style.display =
+        "block";
 
-  }
+      loadKeys();
+
+    } else {
+
+      loginDiv.style.display =
+        "flex";
+
+      dashDiv.style.display =
+        "none";
+
+    }
+
+  });
 
 });
 
@@ -268,11 +321,16 @@ function genKey() {
   for (let i = 0; i < 16; i++) {
 
     key += chars[
-      Math.floor(Math.random() * chars.length)
+      Math.floor(
+        Math.random() * chars.length
+      )
     ];
 
-    if (i % 4 === 3 && i < 15)
+    if (i % 4 === 3 && i < 15) {
+
       key += "-";
+
+    }
 
   }
 
@@ -286,13 +344,21 @@ window.createKey = async function () {
   try {
 
     const days = parseInt(
-      document.getElementById("duration").value
+      document.getElementById(
+        "duration"
+      ).value
     );
 
     const now = Date.now();
 
     const expiresAt =
-      now + (days * 24 * 60 * 60 * 1000);
+      now + (
+        days *
+        24 *
+        60 *
+        60 *
+        1000
+      );
 
     const newKey = genKey();
 
@@ -312,13 +378,24 @@ window.createKey = async function () {
 
     };
 
+    /* GUARDAR */
     await set(
-      ref(db, "keys/" + newKey),
+
+      ref(
+        db,
+        "keys/" + newKey
+      ),
+
       keyData
+
     );
 
-    document.getElementById("newKey").innerHTML =
-      "KEY: <b>" + newKey + "</b>";
+    document.getElementById(
+      "newKey"
+    ).innerHTML =
+      "KEY: <b>" +
+      newKey +
+      "</b>";
 
     loadKeys();
 
@@ -348,20 +425,28 @@ async function loadKeys() {
 
   if (snapshot.exists()) {
 
-    const data = snapshot.val();
+    const data =
+      snapshot.val();
 
-    Object.values(data).forEach(k => {
+    Object.values(data)
+    .forEach(k => {
 
       const div =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
-      div.className = "item";
+      div.className =
+        "item";
 
       const exp =
-        new Date(k.expiresAt);
+        new Date(
+          k.expiresAt
+        );
 
       const expired =
-        Date.now() > k.expiresAt;
+        Date.now() >
+        k.expiresAt;
 
       div.innerHTML = `
 
@@ -377,9 +462,11 @@ async function loadKeys() {
         </div>
 
         <div class="status">
-          ${expired
+          ${
+            expired
             ? "❌ EXPIRADA"
-            : "✅ ACTIVA"}
+            : "✅ ACTIVA"
+          }
         </div>
 
       `;
