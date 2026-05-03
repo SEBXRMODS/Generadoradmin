@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 
@@ -17,8 +16,6 @@ body{
   background:#0b1220;
   color:white;
 }
-
-/* LOGIN */
 
 #login{
   height:100vh;
@@ -57,8 +54,6 @@ button{
 button:hover{
   background:#2563eb;
 }
-
-/* DASH */
 
 #dash{
   display:none;
@@ -115,8 +110,6 @@ button:hover{
 
 <body>
 
-<!-- LOGIN -->
-
 <div id="login">
 
 <div class="box">
@@ -142,15 +135,11 @@ Entrar
 
 </div>
 
-<!-- DASH -->
-
 <div id="dash">
 
 <h2>Panel SaaS</h2>
 
 <h3 id="welcomeAdmin"></h3>
-
-<!-- STATS -->
 
 <div class="stats-grid">
 
@@ -194,8 +183,6 @@ Cerrar sesión
 
 <div class="panel">
 
-<!-- CREAR -->
-
 <div class="section">
 
 <h3>Crear Key</h3>
@@ -217,8 +204,6 @@ Generar Key
 
 </div>
 
-<!-- KEYS -->
-
 <div class="section">
 
 <h3>Mis Keys</h3>
@@ -230,8 +215,6 @@ Generar Key
 </div>
 
 <br>
-
-<!-- BAN -->
 
 <div class="section">
 
@@ -249,8 +232,6 @@ Banear
 
 <br>
 
-<!-- LOGS -->
-
 <div class="section">
 
 <h3>Logs</h3>
@@ -262,8 +243,6 @@ Banear
 </div>
 
 <script type="module">
-
-/* FIREBASE */
 
 import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -289,8 +268,6 @@ child
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* CONFIG */
-
 const firebaseConfig = {
 
 apiKey:"TU_API_KEY",
@@ -308,8 +285,6 @@ messagingSenderId:"TU_SENDER",
 appId:"TU_APP"
 
 };
-
-/* INIT */
 
 const app =
 initializeApp(firebaseConfig);
@@ -451,7 +426,7 @@ return key;
 
 }
 
-/* CREAR KEY */
+/* CREATE KEY */
 
 window.createKey =
 async function(){
@@ -562,8 +537,6 @@ document.createElement(
 div.className =
 "item";
 
-/* ANTI SHARE VISUAL */
-
 if(k.shared){
 
 div.style.border =
@@ -617,8 +590,6 @@ list.appendChild(div);
 }
 
 }
-
-/* STATS */
 
 async function loadStats(){
 
@@ -695,57 +666,7 @@ document.getElementById(
 ).innerHTML =
 used;
 
-/* ONLINE */
-
-const onlineSnap =
-await get(
-
-child(
-ref(db),
-"onlineUsers"
-)
-
-);
-
-if(onlineSnap.exists()){
-
-document.getElementById(
-"onlineUsersStat"
-).innerHTML =
-
-Object.keys(
-onlineSnap.val()
-).length;
-
 }
-
-/* BANNED */
-
-const bannedSnap =
-await get(
-
-child(
-ref(db),
-"bannedDevices"
-)
-
-);
-
-if(bannedSnap.exists()){
-
-document.getElementById(
-"bannedCount"
-).innerHTML =
-
-Object.keys(
-bannedSnap.val()
-).length;
-
-}
-
-}
-
-/* LOGS */
 
 async function loadLogs(){
 
@@ -801,8 +722,6 @@ logsDiv.appendChild(div);
 
 }
 
-/* BAN DEVICE */
-
 window.banDevice =
 async function(){
 
@@ -836,4 +755,3 @@ alert(
 
 </body>
 </html>
-```
