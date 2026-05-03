@@ -93,11 +93,11 @@ button{
     <h2>Admin Login</h2>
 
     <input
-      id="user"
-      placeholder="Usuario">
+      id="email"
+      placeholder="Email">
 
     <input
-      id="pass"
+      id="password"
       type="password"
       placeholder="Contraseña">
 
@@ -124,7 +124,7 @@ button{
 
   <div class="panel">
 
-    <!-- GENERAR -->
+    <!-- CREAR -->
     <div class="section">
 
       <h3>Crear Key</h3>
@@ -180,15 +180,34 @@ import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
+
+  getAuth,
+
+  signInWithEmailAndPassword,
+
+  onAuthStateChanged,
+
+  signOut
+
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+
   getDatabase,
+
   ref,
+
   set,
+
   get,
+
   child
+
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* FIREBASE */
+/* CONFIG */
 const firebaseConfig = {
 
   apiKey:
@@ -214,52 +233,84 @@ const firebaseConfig = {
 
 };
 
+/* INIT */
 const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
 
 const db = getDatabase(app);
 
-/* LOGIN SIMPLE */
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "1234";
+/* LOGIN */
+window.login = async function(){
 
-window.login = function(){
+  const email =
+    document.getElementById(
+      "email"
+    ).value;
 
-  const u =
-    document.getElementById("user").value;
+  const password =
+    document.getElementById(
+      "password"
+    ).value;
 
-  const p =
-    document.getElementById("pass").value;
+  try{
 
-  if(
-    u === ADMIN_USER &&
-    p === ADMIN_PASS
-  ){
+    await signInWithEmailAndPassword(
+
+      auth,
+      email,
+      password
+
+    );
+
+  }catch(err){
+
+    document.getElementById(
+      "error"
+    ).innerHTML =
+      err.message;
+
+  }
+
+};
+
+/* SESSION */
+onAuthStateChanged(auth, user => {
+
+  if(user){
 
     document.getElementById(
       "login"
-    ).style.display = "none";
+    ).style.display =
+      "none";
 
     document.getElementById(
       "dash"
-    ).style.display = "block";
+    ).style.display =
+      "block";
 
     loadKeys();
 
   }else{
 
     document.getElementById(
-      "error"
-    ).innerHTML =
-      "Datos incorrectos";
+      "login"
+    ).style.display =
+      "flex";
+
+    document.getElementById(
+      "dash"
+    ).style.display =
+      "none";
 
   }
 
-};
+});
 
 /* LOGOUT */
-window.logout = function(){
+window.logout = async function(){
 
-  location.reload();
+  await signOut(auth);
 
 };
 
@@ -357,8 +408,6 @@ window.createKey = async function(){
     loadKeys();
 
   }catch(err){
-
-    console.error(err);
 
     alert(err.message);
 
