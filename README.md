@@ -1,7 +1,13 @@
+# Panel SaaS Admin con Firebase
+
+Reemplaza TODO tu archivo HTML por este código completo.
+
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel SaaS Admin</title>
 
 <style>
@@ -12,7 +18,6 @@ body {
   color: white;
 }
 
-/* LOGIN */
 #login {
   height: 100vh;
   display: flex;
@@ -34,6 +39,7 @@ input, select {
   margin: 8px 0;
   border-radius: 6px;
   border: none;
+  box-sizing: border-box;
 }
 
 button {
@@ -51,17 +57,9 @@ button:hover {
   background: #2563eb;
 }
 
-/* DASHBOARD */
 #dash {
   display: none;
   padding: 20px;
-}
-
-.card {
-  background: #111a2e;
-  padding: 10px;
-  border-radius: 10px;
-  margin: 5px;
 }
 
 .panel {
@@ -82,13 +80,17 @@ button:hover {
   padding: 10px;
   margin-top: 8px;
   border-radius: 6px;
-  display: flex;
-  justify-content: space-between;
 }
 
 .small {
   font-size: 12px;
   opacity: 0.7;
+  margin-top: 5px;
+}
+
+.status {
+  margin-top: 5px;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -113,12 +115,14 @@ button:hover {
 <div id="dash">
 
   <h2>Panel SaaS</h2>
+
   <button onclick="logout()">Cerrar sesión</button>
 
   <div class="panel">
 
-    <!-- CREAR -->
+    <!-- CREAR KEY -->
     <div class="section">
+
       <h3>Crear Key</h3>
 
       <select id="duration">
@@ -132,92 +136,243 @@ button:hover {
       <button onclick="createKey()">Generar</button>
 
       <p id="newKey"></p>
+
     </div>
 
     <!-- LISTA -->
     <div class="section">
-      <h3>Keys</h3>
+
+      <h3>Keys Generadas</h3>
+
       <div id="list"></div>
+
     </div>
 
   </div>
 
 </div>
 
-<script>
-/* ---------------- LOGIN ---------------- */
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* FIREBASE CONFIG */
+const firebaseConfig = {
+
+  apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
+
+  authDomain: "panelsebxrmods.firebaseapp.com",
+
+  projectId: "panelsebxrmods",
+
+  storageBucket: "panelsebxrmods.firebasestorage.app",
+
+  messagingSenderId: "717339227525",
+
+  appId: "1:717339227525:web:e3ee653c3d2aeb1b5800ec"
+
+};
+
+/* INICIAR FIREBASE */
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+/* LOGIN SIMPLE */
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "1234";
 
-let keys = [];
+window.login = function () {
 
-function login() {
   const u = document.getElementById("user").value;
+
   const p = document.getElementById("pass").value;
 
   if (u === ADMIN_USER && p === ADMIN_PASS) {
+
     document.getElementById("login").style.display = "none";
+
     document.getElementById("dash").style.display = "block";
+
+    loadKeys();
+
   } else {
+
     document.getElementById("error").innerText = "Credenciales incorrectas";
+
   }
-}
 
-function logout() {
+};
+
+/* LOGOUT */
+window.logout = function () {
+
   location.reload();
-}
 
-/* ---------------- GENERAR KEY ---------------- */
+};
+
+/* GENERAR KEY */
 function genKey() {
+
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
   let key = "";
 
   for (let i = 0; i < 16; i++) {
+
     key += chars[Math.floor(Math.random() * chars.length)];
-    if (i % 4 === 3 && i < 15) key += "-";
+
+    if (i % 4 === 3 && i < 15) {
+      key += "-";
+    }
+
   }
 
   return key;
+
 }
 
-/* ---------------- CREAR KEY ---------------- */
-function createKey() {
-  const days = parseInt(document.getElementById("duration").value);
+/* CREAR KEY */
+window.createKey = async function () {
 
-  const key = {
-    id: Date.now(),
+  const days = parseInt(
+    document.getElementById("duration").value
+  );
+
+  const now = Date.now();
+
+  const expiresAt = now + (
+    days * 24 * 60 * 60 * 1000
+  );
+
+  const keyData = {
+
     key: genKey(),
-    days: days
+
+    days: days,
+
+    createdAt: now,
+
+    expiresAt: expiresAt,
+
+    used: false
+
   };
 
-  keys.push(key);
+  /* GUARDAR EN FIRESTORE */
+  await addDoc(
+    collection(db, "keys"),
+    keyData
+  );
 
-  document.getElementById("newKey").innerHTML =
-    "KEY: <b>" + key.key + "</b>";
+  document.getElementById("newKey").innerHTML = `
+    KEY: <b>${keyData.key}</b>
+  `;
 
-  render();
-}
+  loadKeys();
 
-/* ---------------- RENDER ---------------- */
-function render() {
+};
+
+/* CARGAR KEYS */
+async function loadKeys() {
+
   const list = document.getElementById("list");
+
   list.innerHTML = "";
 
-  keys.forEach(k => {
+  const querySnapshot = await getDocs(
+    collection(db, "keys")
+  );
+
+  querySnapshot.forEach(doc => {
+
+    const k = doc.data();
+
     const div = document.createElement("div");
+
     div.className = "item";
 
+    const expDate = new Date(k.expiresAt);
+
+    const expired = Date.now() > k.expiresAt;
+
     div.innerHTML = `
-      <div>
-        <b>${k.key}</b>
-        <div class="small">${k.days} días</div>
+
+      <b>${k.key}</b>
+
+      <div class="small">
+        Duración: ${k.days} días
       </div>
+
+      <div class="small">
+        Expira: ${expDate.toLocaleString()}
+      </div>
+
+      <div class="status">
+        ${expired ? "❌ EXPIRADA" : "✅ ACTIVA"}
+      </div>
+
+      <div class="small">
+        ${k.used ? "🔒 USADA" : "🟢 DISPONIBLE"}
+      </div>
+
     `;
 
     list.appendChild(div);
+
   });
+
 }
+
 </script>
 
 </body>
 </html>
+```
+
+# IMPORTANTE
+
+Después de pegar el código:
+
+## 1
+
+Guarda el archivo.
+
+---
+
+## 2
+
+Sube el archivo a GitHub.
+
+---
+
+## 3
+
+En Firebase abre:
+
+Firestore Database
+
+---
+
+## 4
+
+Genera una key.
+
+---
+
+## 5
+
+Verifica que aparezca la colección:
+
+```text
+keys
+```
+
+Si aparece, ya tienes Firebase funcionando correctamente.
