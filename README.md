@@ -256,23 +256,23 @@ from
 
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* CONFIG */
+/* FIREBASE CONFIG */
 
 const firebaseConfig = {
 
-apiKey:"TU_API_KEY",
+apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
 
-authDomain:"TU_AUTH_DOMAIN",
+authDomain: "panelsebxrmods.firebaseapp.com",
 
-databaseURL:"TU_DATABASE_URL",
+databaseURL: "https://panelsebxrmods-default-rtdb.firebaseio.com",
 
-projectId:"TU_PROJECT_ID",
+projectId: "panelsebxrmods",
 
-storageBucket:"TU_STORAGE_BUCKET",
+storageBucket: "panelsebxrmods.firebasestorage.app",
 
-messagingSenderId:"TU_SENDER_ID",
+messagingSenderId: "717339227525",
 
-appId:"TU_APP_ID"
+appId: "1:717339227525:web:98101a11654e25a45800ec"
 
 };
 
@@ -605,8 +605,6 @@ document.getElementById(
 "sharedKeys"
 ).innerHTML =
 shared;
-
-/* ONLINE */
 
 const onlineSnap =
 await get(
