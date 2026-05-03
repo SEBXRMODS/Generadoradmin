@@ -105,10 +105,17 @@ button:hover{
   color:#3b82f6;
 }
 
+#error{
+  color:red;
+  margin-top:10px;
+}
+
 </style>
 </head>
 
 <body>
+
+<!-- LOGIN -->
 
 <div id="login">
 
@@ -118,6 +125,7 @@ button:hover{
 
 <input
 id="email"
+type="email"
 placeholder="Email">
 
 <input
@@ -134,6 +142,8 @@ Entrar
 </div>
 
 </div>
+
+<!-- DASH -->
 
 <div id="dash">
 
@@ -244,6 +254,8 @@ Banear
 
 <script type="module">
 
+/* FIREBASE */
+
 import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
@@ -268,23 +280,28 @@ child
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+/* CONFIG */
+/* REEMPLAZA ESTO CON TUS DATOS */
+
 const firebaseConfig = {
 
 apiKey:"TU_API_KEY",
 
-authDomain:"TU_AUTH",
+authDomain:"TU_AUTH_DOMAIN",
 
-databaseURL:"TU_DB_URL",
+databaseURL:"TU_DATABASE_URL",
 
-projectId:"TU_PROJECT",
+projectId:"TU_PROJECT_ID",
 
-storageBucket:"TU_BUCKET",
+storageBucket:"TU_STORAGE_BUCKET",
 
-messagingSenderId:"TU_SENDER",
+messagingSenderId:"TU_SENDER_ID",
 
-appId:"TU_APP"
+appId:"TU_APP_ID"
 
 };
+
+/* INIT */
 
 const app =
 initializeApp(firebaseConfig);
@@ -301,6 +318,8 @@ let currentUID = "";
 
 window.login =
 async function(){
+
+console.log("Login iniciado");
 
 const email =
 document.getElementById(
@@ -320,7 +339,13 @@ email,
 password
 );
 
+console.log(
+"Login correcto"
+);
+
 }catch(err){
+
+console.log(err);
 
 document.getElementById(
 "error"
@@ -333,8 +358,14 @@ err.message;
 
 /* SESSION */
 
-onAuthStateChanged(auth,
+onAuthStateChanged(
+auth,
 (user)=>{
+
+console.log(
+"Estado auth:",
+user
+);
 
 const loginDiv =
 document.getElementById(
@@ -537,6 +568,8 @@ document.createElement(
 div.className =
 "item";
 
+/* ANTI SHARE */
+
 if(k.shared){
 
 div.style.border =
@@ -590,6 +623,8 @@ list.appendChild(div);
 }
 
 }
+
+/* STATS */
 
 async function loadStats(){
 
@@ -666,7 +701,57 @@ document.getElementById(
 ).innerHTML =
 used;
 
+/* ONLINE */
+
+const onlineSnap =
+await get(
+
+child(
+ref(db),
+"onlineUsers"
+)
+
+);
+
+if(onlineSnap.exists()){
+
+document.getElementById(
+"onlineUsersStat"
+).innerHTML =
+
+Object.keys(
+onlineSnap.val()
+).length;
+
 }
+
+/* BANNED */
+
+const bannedSnap =
+await get(
+
+child(
+ref(db),
+"bannedDevices"
+)
+
+);
+
+if(bannedSnap.exists()){
+
+document.getElementById(
+"bannedCount"
+).innerHTML =
+
+Object.keys(
+bannedSnap.val()
+).length;
+
+}
+
+}
+
+/* LOGS */
 
 async function loadLogs(){
 
@@ -721,6 +806,8 @@ logsDiv.appendChild(div);
 }
 
 }
+
+/* BAN DEVICE */
 
 window.banDevice =
 async function(){
