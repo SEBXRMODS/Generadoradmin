@@ -3,18 +3,32 @@
 
 <head>
 <meta charset="UTF-8">
-<title>Firebase Test</title>
+<title>Realtime Test</title>
 </head>
 
 <body style="background:#0b1220;color:white;font-family:Arial;">
 
-<h1>Firebase funcionando</h1>
+<h1>Realtime Database Test</h1>
+
+<button onclick="guardar()">
+Guardar Key
+</button>
+
+<p id="estado"></p>
 
 <script type="module">
 
 import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
+import {
+  getDatabase,
+  ref,
+  set
+} from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* CONFIG */
 const firebaseConfig = {
 
   apiKey:
@@ -40,12 +54,40 @@ const firebaseConfig = {
 
 };
 
+/* INIT */
 const app = initializeApp(firebaseConfig);
 
-console.log("firebase iniciado");
+const db = getDatabase(app);
 
-document.body.innerHTML +=
-"<h2>Firebase conectado ✅</h2>";
+/* BOTON */
+window.guardar = async function () {
+
+  try {
+
+    await set(
+
+      ref(db, "test/hola"),
+
+      {
+        mensaje: "funciona"
+      }
+
+    );
+
+    document.getElementById("estado").innerHTML =
+      "GUARDADO ✅";
+
+    console.log("guardado");
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(err.message);
+
+  }
+
+};
 
 </script>
 
