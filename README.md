@@ -153,25 +153,11 @@ button:hover{
 
       <select id="duration">
 
-        <option value="1">
-          1 día
-        </option>
-
-        <option value="7">
-          7 días
-        </option>
-
-        <option value="14">
-          2 semanas
-        </option>
-
-        <option value="30">
-          1 mes
-        </option>
-
-        <option value="365">
-          1 año
-        </option>
+        <option value="1">1 día</option>
+        <option value="7">7 días</option>
+        <option value="14">2 semanas</option>
+        <option value="30">1 mes</option>
+        <option value="365">1 año</option>
 
       </select>
 
@@ -198,17 +184,15 @@ button:hover{
 
 <script type="module">
 
+/* FIREBASE */
 import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
 
   getAuth,
-
   signInWithEmailAndPassword,
-
   onAuthStateChanged,
-
   signOut
 
 } from
@@ -217,17 +201,11 @@ import {
 import {
 
   getDatabase,
-
   ref,
-
   set,
-
   get,
-
   child,
-
   remove,
-
   onValue
 
 } from
@@ -237,25 +215,25 @@ import {
 const firebaseConfig = {
 
   apiKey:
-  "PON_TU_API_KEY",
+  "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
 
   authDomain:
-  "PON_TU_AUTH_DOMAIN",
+  "panelsebxrmods.firebaseapp.com",
 
   databaseURL:
-  "PON_TU_DATABASE_URL",
+  "https://panelsebxrmods-default-rtdb.firebaseio.com",
 
   projectId:
-  "PON_TU_PROJECT_ID",
+  "panelsebxrmods",
 
   storageBucket:
-  "PON_TU_STORAGE_BUCKET",
+  "panelsebxrmods.firebasestorage.app",
 
   messagingSenderId:
-  "PON_TU_MESSAGING_SENDER_ID",
+  "717339227525",
 
   appId:
-  "PON_TU_APP_ID"
+  "1:717339227525:web:e3ee653c3d2aeb1b5800ec"
 
 };
 
@@ -270,23 +248,17 @@ const db = getDatabase(app);
 window.login = async function(){
 
   const email =
-    document.getElementById(
-      "email"
-    ).value;
+    document.getElementById("email").value;
 
   const password =
-    document.getElementById(
-      "password"
-    ).value;
+    document.getElementById("password").value;
 
   try{
 
     await signInWithEmailAndPassword(
-
       auth,
       email,
       password
-
     );
 
   }catch(err){
@@ -301,33 +273,27 @@ window.login = async function(){
 };
 
 /* SESSION */
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, (user) => {
+
+  const loginDiv =
+    document.getElementById("login");
+
+  const dashDiv =
+    document.getElementById("dash");
 
   if(user){
 
-    document.getElementById(
-      "login"
-    ).style.display =
-      "none";
+    loginDiv.style.display = "none";
 
-    document.getElementById(
-      "dash"
-    ).style.display =
-      "block";
+    dashDiv.style.display = "block";
 
     loadKeys();
 
   }else{
 
-    document.getElementById(
-      "login"
-    ).style.display =
-      "flex";
+    loginDiv.style.display = "flex";
 
-    document.getElementById(
-      "dash"
-    ).style.display =
-      "none";
+    dashDiv.style.display = "none";
 
   }
 
@@ -374,17 +340,14 @@ window.createKey = async function(){
   try{
 
     const days = parseInt(
-
       document.getElementById(
         "duration"
       ).value
-
     );
 
     const now = Date.now();
 
     const expiresAt =
-
       now +
       (
         days *
@@ -426,10 +389,7 @@ window.createKey = async function(){
     document.getElementById(
       "newKey"
     ).innerHTML =
-
-      "<b>" +
-      newKey +
-      "</b>";
+      "<b>" + newKey + "</b>";
 
     loadKeys();
 
@@ -441,12 +401,15 @@ window.createKey = async function(){
 
 };
 
-/* ACTIVAR / DESACTIVAR */
+/* ACTIVAR */
 window.toggleKey = async function(key, current){
 
   await set(
 
-    ref(db, "keys/" + key + "/active"),
+    ref(
+      db,
+      "keys/" + key + "/active"
+    ),
 
     !current
 
@@ -478,7 +441,10 @@ window.renewKey = async function(key, extraDays){
       );
 
     await set(
-      ref(db, "keys/" + key + "/expiresAt"),
+      ref(
+        db,
+        "keys/" + key + "/expiresAt"
+      ),
       newExpire
     );
 
@@ -504,7 +470,10 @@ window.deleteExpired = async function(){
       if(Date.now() > k.expiresAt){
 
         await remove(
-          ref(db, "keys/" + k.key)
+          ref(
+            db,
+            "keys/" + k.key
+          )
         );
 
       }
@@ -526,12 +495,7 @@ async function loadKeys(){
   list.innerHTML = "";
 
   const snapshot = await get(
-
-    child(
-      ref(db),
-      "keys"
-    )
-
+    child(ref(db), "keys")
   );
 
   if(snapshot.exists()){
@@ -599,14 +563,15 @@ async function loadKeys(){
 
 }
 
-/* CONTADOR ONLINE */
+/* ONLINE */
 onValue(ref(db, "onlineUsers"), snapshot => {
 
   if(snapshot.exists()){
 
-    const total = Object.keys(
-      snapshot.val()
-    ).length;
+    const total =
+      Object.keys(
+        snapshot.val()
+      ).length;
 
     document.getElementById(
       "onlineCount"
