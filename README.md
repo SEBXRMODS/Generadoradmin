@@ -1,8 +1,3 @@
-# Panel SaaS Admin con Firebase
-
-Reemplaza TODO tu archivo HTML por este código completo.
-
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -18,6 +13,7 @@ body {
   color: white;
 }
 
+/* LOGIN */
 #login {
   height: 100vh;
   display: flex;
@@ -57,6 +53,7 @@ button:hover {
   background: #2563eb;
 }
 
+/* DASHBOARD */
 #dash {
   display: none;
   padding: 20px;
@@ -100,14 +97,17 @@ button:hover {
 <!-- LOGIN -->
 <div id="login">
   <div class="box">
+
     <h2>Admin Login</h2>
 
     <input id="user" placeholder="Usuario">
+
     <input id="pass" type="password" placeholder="Contraseña">
 
     <button onclick="login()">Entrar</button>
 
     <p id="error"></p>
+
   </div>
 </div>
 
@@ -133,7 +133,9 @@ button:hover {
         <option value="365">1 año</option>
       </select>
 
-      <button onclick="createKey()">Generar</button>
+      <button onclick="createKey()">
+        Generar
+      </button>
 
       <p id="newKey"></p>
 
@@ -154,14 +156,17 @@ button:hover {
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+/* FIREBASE IMPORTS */
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
   collection,
   addDoc,
   getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* FIREBASE CONFIG */
 const firebaseConfig = {
@@ -187,25 +192,32 @@ const db = getFirestore(app);
 
 /* LOGIN SIMPLE */
 const ADMIN_USER = "admin";
+
 const ADMIN_PASS = "1234";
 
+/* LOGIN */
 window.login = function () {
 
-  const u = document.getElementById("user").value;
+  const u =
+    document.getElementById("user").value;
 
-  const p = document.getElementById("pass").value;
+  const p =
+    document.getElementById("pass").value;
 
   if (u === ADMIN_USER && p === ADMIN_PASS) {
 
-    document.getElementById("login").style.display = "none";
+    document.getElementById("login").style.display =
+      "none";
 
-    document.getElementById("dash").style.display = "block";
+    document.getElementById("dash").style.display =
+      "block";
 
     loadKeys();
 
   } else {
 
-    document.getElementById("error").innerText = "Credenciales incorrectas";
+    document.getElementById("error").innerText =
+      "Credenciales incorrectas";
 
   }
 
@@ -218,16 +230,19 @@ window.logout = function () {
 
 };
 
-/* GENERAR KEY */
+/* GENERADOR DE KEY */
 function genKey() {
 
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
   let key = "";
 
   for (let i = 0; i < 16; i++) {
 
-    key += chars[Math.floor(Math.random() * chars.length)];
+    key += chars[
+      Math.floor(Math.random() * chars.length)
+    ];
 
     if (i % 4 === 3 && i < 15) {
       key += "-";
@@ -248,9 +263,8 @@ window.createKey = async function () {
 
   const now = Date.now();
 
-  const expiresAt = now + (
-    days * 24 * 60 * 60 * 1000
-  );
+  const expiresAt =
+    now + (days * 24 * 60 * 60 * 1000);
 
   const keyData = {
 
@@ -273,7 +287,8 @@ window.createKey = async function () {
   );
 
   document.getElementById("newKey").innerHTML = `
-    KEY: <b>${keyData.key}</b>
+    KEY:
+    <b>${keyData.key}</b>
   `;
 
   loadKeys();
@@ -283,44 +298,55 @@ window.createKey = async function () {
 /* CARGAR KEYS */
 async function loadKeys() {
 
-  const list = document.getElementById("list");
+  const list =
+    document.getElementById("list");
 
   list.innerHTML = "";
 
-  const querySnapshot = await getDocs(
-    collection(db, "keys")
-  );
+  const querySnapshot =
+    await getDocs(
+      collection(db, "keys")
+    );
 
   querySnapshot.forEach(doc => {
 
     const k = doc.data();
 
-    const div = document.createElement("div");
+    const div =
+      document.createElement("div");
 
     div.className = "item";
 
-    const expDate = new Date(k.expiresAt);
+    const expDate =
+      new Date(k.expiresAt);
 
-    const expired = Date.now() > k.expiresAt;
+    const expired =
+      Date.now() > k.expiresAt;
 
     div.innerHTML = `
 
       <b>${k.key}</b>
 
       <div class="small">
-        Duración: ${k.days} días
+        Duración:
+        ${k.days} días
       </div>
 
       <div class="small">
-        Expira: ${expDate.toLocaleString()}
+        Expira:
+        ${expDate.toLocaleString()}
       </div>
 
       <div class="status">
-        ${expired ? "❌ EXPIRADA" : "✅ ACTIVA"}
+        ${expired
+          ? "❌ EXPIRADA"
+          : "✅ ACTIVA"}
       </div>
 
       <div class="small">
-        ${k.used ? "🔒 USADA" : "🟢 DISPONIBLE"}
+        ${k.used
+          ? "🔒 USADA"
+          : "🟢 DISPONIBLE"}
       </div>
 
     `;
@@ -335,44 +361,3 @@ async function loadKeys() {
 
 </body>
 </html>
-```
-
-# IMPORTANTE
-
-Después de pegar el código:
-
-## 1
-
-Guarda el archivo.
-
----
-
-## 2
-
-Sube el archivo a GitHub.
-
----
-
-## 3
-
-En Firebase abre:
-
-Firestore Database
-
----
-
-## 4
-
-Genera una key.
-
----
-
-## 5
-
-Verifica que aparezca la colección:
-
-```text
-keys
-```
-
-Si aparece, ya tienes Firebase funcionando correctamente.
