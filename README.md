@@ -3,8 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Panel SaaS</title>
 
@@ -169,7 +168,7 @@ button:hover{
 
     </div>
 
-    <!-- LISTA -->
+    <!-- KEYS -->
     <div class="section">
 
       <h3>Keys</h3>
@@ -177,6 +176,17 @@ button:hover{
       <div id="list"></div>
 
     </div>
+
+  </div>
+
+  <br>
+
+  <!-- LOGS -->
+  <div class="section">
+
+    <h3>Logs Usuarios</h3>
+
+    <div id="logs"></div>
 
   </div>
 
@@ -289,6 +299,8 @@ onAuthStateChanged(auth, (user) => {
 
     loadKeys();
 
+    loadLogs();
+
   }else{
 
     loginDiv.style.display = "flex";
@@ -306,7 +318,7 @@ window.logout = async function(){
 
 };
 
-/* GENERADOR */
+/* GENERAR KEY */
 function genKey(){
 
   const chars =
@@ -371,6 +383,8 @@ window.createKey = async function(){
 
       used:false,
 
+      usedBy:"",
+
       active:true
 
     };
@@ -401,7 +415,7 @@ window.createKey = async function(){
 
 };
 
-/* ACTIVAR */
+/* ACTIVAR / DESACTIVAR */
 window.toggleKey = async function(key, current){
 
   await set(
@@ -513,7 +527,6 @@ async function loadKeys(){
         Date.now() >
         k.expiresAt;
 
-      /* TIEMPO RESTANTE */
       const remainingMs =
         k.expiresAt - Date.now();
 
@@ -558,12 +571,21 @@ async function loadKeys(){
         </div>
 
         <div class="small">
+          Estado:
           ${
             expired
             ? "❌ Expirada"
             : k.active
             ? "✅ Activa"
             : "⛔ Desactivada"
+          }
+        </div>
+
+        <div class="small">
+          ${
+            k.used
+            ? "🔒 Usada por: " + k.usedBy
+            : "🟢 Sin usar"
           }
         </div>
 
@@ -589,10 +611,108 @@ async function loadKeys(){
 
 }
 
+/* LOGS */
+async function loadLogs(){
+
+  const logsDiv =
+    document.getElementById("logs");
+
+  logsDiv.innerHTML = "";
+
+  const snapshot = await get(
+    child(ref(db), "logs")
+  );
+
+  if(snapshot.exists()){
+
+    const data = snapshot.val();
+
+    Object.values(data)
+    .reverse()
+    .forEach(log => {
+
+      const div =
+        document.createElement("div");
+
+      div.className = "item";
+
+      div.innerHTML = `
+
+        <div>
+          📱 ${log.device}
+        </div>
+
+        <div class="small">
+          🔑 ${log.key}
+        </div>
+
+        <div class="small">
+          🕒
+          ${new Date(log.time).toLocaleString()}
+        </div>
+
+      `;
+
+      logsDiv.appendChild(div);
+
+    });
+
+  }
+
+}
+
+/* AGREGAR LOG */
+async function addLog(device, key){
+
+  const id = Date.now();
+
+  await set(
+
+    ref(db, "logs/" + id),
+
+    {
+
+      device: device,
+      key: key,
+      time: Date.now()
+
+    }
+
+  );
+
+}
+
 /* AUTO ACTUALIZAR */
 setInterval(() => {
 
   loadKeys();
+
+}, 60000);
+
+/* AUTO DELETE */
+setInterval(async () => {
+
+  const snapshot = await get(
+    child(ref(db), "keys")
+  );
+
+  if(snapshot.exists()){
+
+    const data = snapshot.val();
+
+    for(const k of Object.values(data)){
+
+      if(Date.now() > k.expiresAt){
+
+        await remove(
+          ref(db, "keys/" + k.key)
+        );
+
+      }
+
+    }
+
+  }
 
 }, 60000);
 
