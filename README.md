@@ -86,6 +86,7 @@ button:hover {
     <option value="1">1 día</option>
     <option value="2">2 días</option>
     <option value="7">7 días</option>
+    <option value="8">8 días</option>
     <option value="30">1 mes</option>
     <option value="365">1 año</option>
   </select>
@@ -98,8 +99,8 @@ button:hover {
 
 <script>
 // 🔐 LOGIN SIMULADO
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "1234";
+const ADMIN_USER = "karen";
+const ADMIN_PASS = "2526";
 
 function login() {
   const u = document.getElementById("user").value;
