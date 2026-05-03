@@ -51,6 +51,10 @@ button{
   cursor:pointer;
 }
 
+button:hover{
+  background:#2563eb;
+}
+
 #dash{
   display:none;
   padding:20px;
@@ -78,6 +82,16 @@ button{
 .small{
   opacity:.7;
   font-size:12px;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.actions button{
+  flex:1;
 }
 
 </style>
@@ -116,15 +130,23 @@ button{
 
   <h2>Panel SaaS</h2>
 
+  <h3 id="onlineCount">
+    Usuarios online: 0
+  </h3>
+
   <button onclick="logout()">
     Cerrar sesión
+  </button>
+
+  <button onclick="deleteExpired()">
+    Borrar expiradas
   </button>
 
   <br><br>
 
   <div class="panel">
 
-    <!-- CREAR -->
+    <!-- GENERAR -->
     <div class="section">
 
       <h3>Crear Key</h3>
@@ -202,7 +224,11 @@ import {
 
   get,
 
-  child
+  child,
+
+  remove,
+
+  onValue
 
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -211,25 +237,25 @@ import {
 const firebaseConfig = {
 
   apiKey:
-  "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
+  "PON_TU_API_KEY",
 
   authDomain:
-  "panelsebxrmods.firebaseapp.com",
+  "PON_TU_AUTH_DOMAIN",
 
   databaseURL:
-  "https://panelsebxrmods-default-rtdb.firebaseio.com",
+  "PON_TU_DATABASE_URL",
 
   projectId:
-  "panelsebxrmods",
+  "PON_TU_PROJECT_ID",
 
   storageBucket:
-  "panelsebxrmods.firebasestorage.app",
+  "PON_TU_STORAGE_BUCKET",
 
   messagingSenderId:
-  "717339227525",
+  "PON_TU_MESSAGING_SENDER_ID",
 
   appId:
-  "1:717339227525:web:e3ee653c3d2aeb1b5800ec"
+  "PON_TU_APP_ID"
 
 };
 
@@ -415,6 +441,82 @@ window.createKey = async function(){
 
 };
 
+/* ACTIVAR / DESACTIVAR */
+window.toggleKey = async function(key, current){
+
+  await set(
+
+    ref(db, "keys/" + key + "/active"),
+
+    !current
+
+  );
+
+  loadKeys();
+
+}
+
+/* RENOVAR */
+window.renewKey = async function(key, extraDays){
+
+  const snapshot = await get(
+    child(ref(db), "keys/" + key)
+  );
+
+  if(snapshot.exists()){
+
+    const data = snapshot.val();
+
+    const newExpire =
+      data.expiresAt +
+      (
+        extraDays *
+        24 *
+        60 *
+        60 *
+        1000
+      );
+
+    await set(
+      ref(db, "keys/" + key + "/expiresAt"),
+      newExpire
+    );
+
+    loadKeys();
+
+  }
+
+}
+
+/* BORRAR EXPIRADAS */
+window.deleteExpired = async function(){
+
+  const snapshot = await get(
+    child(ref(db), "keys")
+  );
+
+  if(snapshot.exists()){
+
+    const data = snapshot.val();
+
+    for(const k of Object.values(data)){
+
+      if(Date.now() > k.expiresAt){
+
+        await remove(
+          ref(db, "keys/" + k.key)
+        );
+
+      }
+
+    }
+
+  }
+
+  loadKeys();
+
+}
+
 /* CARGAR KEYS */
 async function loadKeys(){
 
@@ -469,8 +571,22 @@ async function loadKeys(){
           ${
             expired
             ? "❌ Expirada"
-            : "✅ Activa"
+            : k.active
+            ? "✅ Activa"
+            : "⛔ Desactivada"
           }
+        </div>
+
+        <div class="actions">
+
+          <button onclick="toggleKey('${k.key}', ${k.active})">
+            ${k.active ? "Desactivar" : "Activar"}
+          </button>
+
+          <button onclick="renewKey('${k.key}', 30)">
+            +30 días
+          </button>
+
         </div>
 
       `;
@@ -482,6 +598,31 @@ async function loadKeys(){
   }
 
 }
+
+/* CONTADOR ONLINE */
+onValue(ref(db, "onlineUsers"), snapshot => {
+
+  if(snapshot.exists()){
+
+    const total = Object.keys(
+      snapshot.val()
+    ).length;
+
+    document.getElementById(
+      "onlineCount"
+    ).innerHTML =
+      "Usuarios online: " + total;
+
+  }else{
+
+    document.getElementById(
+      "onlineCount"
+    ).innerHTML =
+      "Usuarios online: 0";
+
+  }
+
+});
 
 </script>
 
