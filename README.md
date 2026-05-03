@@ -55,6 +55,11 @@ button:hover{
   background:#2563eb;
 }
 
+#error{
+  color:red;
+  margin-top:10px;
+}
+
 #dash{
   display:none;
   padding:20px;
@@ -105,11 +110,6 @@ button:hover{
   color:#3b82f6;
 }
 
-#error{
-  color:red;
-  margin-top:10px;
-}
-
 </style>
 </head>
 
@@ -133,7 +133,7 @@ id="password"
 type="password"
 placeholder="Contraseña">
 
-<button onclick="login()">
+<button id="loginBtn">
 Entrar
 </button>
 
@@ -185,7 +185,7 @@ Entrar
 
 </div>
 
-<button onclick="logout()">
+<button id="logoutBtn">
 Cerrar sesión
 </button>
 
@@ -206,7 +206,7 @@ Cerrar sesión
 
 </select>
 
-<button onclick="createKey()">
+<button id="createKeyBtn">
 Generar Key
 </button>
 
@@ -234,7 +234,7 @@ Generar Key
 id="banDevice"
 placeholder="device-id">
 
-<button onclick="banDevice()">
+<button id="banBtn">
 Banear
 </button>
 
@@ -253,8 +253,6 @@ Banear
 </div>
 
 <script type="module">
-
-/* FIREBASE */
 
 import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -280,8 +278,7 @@ child
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* CONFIG */
-/* REEMPLAZA ESTO CON TUS DATOS */
+/* FIREBASE CONFIG */
 
 const firebaseConfig = {
 
@@ -316,10 +313,7 @@ let currentUID = "";
 
 /* LOGIN */
 
-window.login =
-async function(){
-
-console.log("Login iniciado");
+async function login(){
 
 const email =
 document.getElementById(
@@ -339,10 +333,6 @@ email,
 password
 );
 
-console.log(
-"Login correcto"
-);
-
 }catch(err){
 
 console.log(err);
@@ -354,18 +344,21 @@ err.message;
 
 }
 
-};
+}
+
+/* LOGOUT */
+
+async function logout(){
+
+await signOut(auth);
+
+}
 
 /* SESSION */
 
 onAuthStateChanged(
 auth,
 (user)=>{
-
-console.log(
-"Estado auth:",
-user
-);
 
 const loginDiv =
 document.getElementById(
@@ -415,15 +408,6 @@ dashDiv.style.display =
 
 });
 
-/* LOGOUT */
-
-window.logout =
-async function(){
-
-await signOut(auth);
-
-};
-
 /* GENERAR KEY */
 
 function genKey(){
@@ -459,8 +443,7 @@ return key;
 
 /* CREATE KEY */
 
-window.createKey =
-async function(){
+async function createKey(){
 
 const days =
 parseInt(
@@ -523,7 +506,7 @@ loadKeys();
 
 loadStats();
 
-};
+}
 
 /* LOAD KEYS */
 
@@ -567,8 +550,6 @@ document.createElement(
 
 div.className =
 "item";
-
-/* ANTI SHARE */
 
 if(k.shared){
 
@@ -701,16 +682,10 @@ document.getElementById(
 ).innerHTML =
 used;
 
-/* ONLINE */
-
 const onlineSnap =
 await get(
-
-child(
-ref(db),
-"onlineUsers"
-)
-
+child(ref(db),
+"onlineUsers")
 );
 
 if(onlineSnap.exists()){
@@ -725,16 +700,10 @@ onlineSnap.val()
 
 }
 
-/* BANNED */
-
 const bannedSnap =
 await get(
-
-child(
-ref(db),
-"bannedDevices"
-)
-
+child(ref(db),
+"bannedDevices")
 );
 
 if(bannedSnap.exists()){
@@ -764,12 +733,8 @@ logsDiv.innerHTML = "";
 
 const snapshot =
 await get(
-
-child(
-ref(db),
-"logs"
-)
-
+child(ref(db),
+"logs")
 );
 
 if(snapshot.exists()){
@@ -809,8 +774,7 @@ logsDiv.appendChild(div);
 
 /* BAN DEVICE */
 
-window.banDevice =
-async function(){
+async function banDevice(){
 
 const device =
 document.getElementById(
@@ -836,9 +800,47 @@ alert(
 "Dispositivo baneado"
 );
 
-};
+}
+
+/* BUTTON EVENTS */
+
+document
+.getElementById(
+"loginBtn"
+)
+.addEventListener(
+"click",
+login
+);
+
+document
+.getElementById(
+"logoutBtn"
+)
+.addEventListener(
+"click",
+logout
+);
+
+document
+.getElementById(
+"createKeyBtn"
+)
+.addEventListener(
+"click",
+createKey
+);
+
+document
+.getElementById(
+"banBtn"
+)
+.addEventListener(
+"click",
+banDevice
+);
 
 </script>
 
-</body>
+</body
 </html>
