@@ -146,7 +146,7 @@ button:hover{
 
   <div class="panel">
 
-    <!-- GENERAR -->
+    <!-- CREAR -->
     <div class="section">
 
       <h3>Crear Key</h3>
@@ -513,6 +513,21 @@ async function loadKeys(){
         Date.now() >
         k.expiresAt;
 
+      /* TIEMPO RESTANTE */
+      const remainingMs =
+        k.expiresAt - Date.now();
+
+      const remainingHours =
+        Math.floor(
+          remainingMs /
+          (1000 * 60 * 60)
+        );
+
+      const remainingDays =
+        Math.floor(
+          remainingHours / 24
+        );
+
       const div =
         document.createElement("div");
 
@@ -529,6 +544,17 @@ async function loadKeys(){
         <div class="small">
           Expira:
           ${exp.toLocaleString()}
+        </div>
+
+        <div class="small">
+          Tiempo restante:
+          ${
+            expired
+            ? "0 horas"
+            : remainingDays > 0
+            ? remainingDays + " días"
+            : remainingHours + " horas"
+          }
         </div>
 
         <div class="small">
@@ -562,6 +588,13 @@ async function loadKeys(){
   }
 
 }
+
+/* AUTO ACTUALIZAR */
+setInterval(() => {
+
+  loadKeys();
+
+}, 60000);
 
 /* ONLINE */
 onValue(ref(db, "onlineUsers"), snapshot => {
