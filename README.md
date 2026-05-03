@@ -3,9 +3,10 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-<title>Panel SaaS</title>
+<title>Panel SaaS Multi Admin</title>
 
 <style>
 
@@ -171,11 +172,28 @@ button:hover{
     <!-- KEYS -->
     <div class="section">
 
-      <h3>Keys</h3>
+      <h3>Mis Keys</h3>
 
       <div id="list"></div>
 
     </div>
+
+  </div>
+
+  <br>
+
+  <!-- BANS -->
+  <div class="section">
+
+    <h3>Banear dispositivo</h3>
+
+    <input
+      id="banDevice"
+      placeholder="device-id">
+
+    <button onclick="banDevice()">
+      Banear
+    </button>
 
   </div>
 
@@ -254,6 +272,8 @@ const auth = getAuth(app);
 
 const db = getDatabase(app);
 
+let currentUID = "";
+
 /* LOGIN */
 window.login = async function(){
 
@@ -293,6 +313,8 @@ onAuthStateChanged(auth, (user) => {
 
   if(user){
 
+    currentUID = user.uid;
+
     loginDiv.style.display = "none";
 
     dashDiv.style.display = "block";
@@ -318,7 +340,7 @@ window.logout = async function(){
 
 };
 
-/* GENERAR KEY */
+/* GENERADOR */
 function genKey(){
 
   const chars =
@@ -393,7 +415,10 @@ window.createKey = async function(){
 
       ref(
         db,
-        "keys/" + newKey
+        "users/" +
+        currentUID +
+        "/keys/" +
+        newKey
       ),
 
       keyData
@@ -415,14 +440,18 @@ window.createKey = async function(){
 
 };
 
-/* ACTIVAR / DESACTIVAR */
+/* ACTIVAR */
 window.toggleKey = async function(key, current){
 
   await set(
 
     ref(
       db,
-      "keys/" + key + "/active"
+      "users/" +
+      currentUID +
+      "/keys/" +
+      key +
+      "/active"
     ),
 
     !current
@@ -437,7 +466,13 @@ window.toggleKey = async function(key, current){
 window.renewKey = async function(key, extraDays){
 
   const snapshot = await get(
-    child(ref(db), "keys/" + key)
+    child(
+      ref(db),
+      "users/" +
+      currentUID +
+      "/keys/" +
+      key
+    )
   );
 
   if(snapshot.exists()){
@@ -457,7 +492,11 @@ window.renewKey = async function(key, extraDays){
     await set(
       ref(
         db,
-        "keys/" + key + "/expiresAt"
+        "users/" +
+        currentUID +
+        "/keys/" +
+        key +
+        "/expiresAt"
       ),
       newExpire
     );
@@ -472,7 +511,12 @@ window.renewKey = async function(key, extraDays){
 window.deleteExpired = async function(){
 
   const snapshot = await get(
-    child(ref(db), "keys")
+    child(
+      ref(db),
+      "users/" +
+      currentUID +
+      "/keys"
+    )
   );
 
   if(snapshot.exists()){
@@ -486,7 +530,10 @@ window.deleteExpired = async function(){
         await remove(
           ref(
             db,
-            "keys/" + k.key
+            "users/" +
+            currentUID +
+            "/keys/" +
+            k.key
           )
         );
 
@@ -509,7 +556,12 @@ async function loadKeys(){
   list.innerHTML = "";
 
   const snapshot = await get(
-    child(ref(db), "keys")
+    child(
+      ref(db),
+      "users/" +
+      currentUID +
+      "/keys"
+    )
   );
 
   if(snapshot.exists()){
@@ -661,28 +713,29 @@ async function loadLogs(){
 
 }
 
-/* AGREGAR LOG */
-async function addLog(device, key){
+/* BAN DEVICE */
+window.banDevice = async function(){
 
-  const id = Date.now();
+  const device = document
+    .getElementById("banDevice")
+    .value;
 
   await set(
 
-    ref(db, "logs/" + id),
+    ref(
+      db,
+      "bannedDevices/" + device
+    ),
 
-    {
-
-      device: device,
-      key: key,
-      time: Date.now()
-
-    }
+    true
 
   );
 
+  alert("Dispositivo baneado");
+
 }
 
-/* AUTO ACTUALIZAR */
+/* AUTO UPDATE */
 setInterval(() => {
 
   loadKeys();
@@ -693,7 +746,12 @@ setInterval(() => {
 setInterval(async () => {
 
   const snapshot = await get(
-    child(ref(db), "keys")
+    child(
+      ref(db),
+      "users/" +
+      currentUID +
+      "/keys"
+    )
   );
 
   if(snapshot.exists()){
@@ -705,7 +763,13 @@ setInterval(async () => {
       if(Date.now() > k.expiresAt){
 
         await remove(
-          ref(db, "keys/" + k.key)
+          ref(
+            db,
+            "users/" +
+            currentUID +
+            "/keys/" +
+            k.key
+          )
         );
 
       }
