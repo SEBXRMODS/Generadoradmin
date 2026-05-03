@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 
@@ -6,7 +7,7 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Panel SaaS Multi Admin</title>
+<title>Panel SaaS</title>
 
 <style>
 
@@ -16,6 +17,8 @@ body{
   background:#0b1220;
   color:white;
 }
+
+/* LOGIN */
 
 #login{
   height:100vh;
@@ -55,6 +58,8 @@ button:hover{
   background:#2563eb;
 }
 
+/* DASH */
+
 #dash{
   display:none;
   padding:20px;
@@ -84,14 +89,25 @@ button:hover{
   font-size:12px;
 }
 
-.actions{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
+.stats-grid{
+  display:grid;
+  grid-template-columns:
+  repeat(auto-fit,minmax(160px,1fr));
+  gap:15px;
+  margin-bottom:20px;
 }
 
-.actions button{
-  flex:1;
+.stat-card{
+  background:#111a2e;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+}
+
+.stat-card h3{
+  margin:0;
+  font-size:28px;
+  color:#3b82f6;
 }
 
 </style>
@@ -100,713 +116,724 @@ button:hover{
 <body>
 
 <!-- LOGIN -->
+
 <div id="login">
 
-  <div class="box">
+<div class="box">
 
-    <h2>Admin Login</h2>
+<h2>Admin Login</h2>
 
-    <input
-      id="email"
-      placeholder="Email">
+<input
+id="email"
+placeholder="Email">
 
-    <input
-      id="password"
-      type="password"
-      placeholder="Contraseña">
+<input
+id="password"
+type="password"
+placeholder="Contraseña">
 
-    <button onclick="login()">
-      Entrar
-    </button>
+<button onclick="login()">
+Entrar
+</button>
 
-    <p id="error"></p>
-
-  </div>
+<p id="error"></p>
 
 </div>
 
-<!-- PANEL -->
+</div>
+
+<!-- DASH -->
+
 <div id="dash">
 
-  <h2>Panel SaaS</h2>
+<h2>Panel SaaS</h2>
 
-  <h3 id="onlineCount">
-    Usuarios online: 0
-  </h3>
+<h3 id="welcomeAdmin"></h3>
 
-  <button onclick="logout()">
-    Cerrar sesión
-  </button>
+<!-- STATS -->
 
-  <button onclick="deleteExpired()">
-    Borrar expiradas
-  </button>
+<div class="stats-grid">
 
-  <br><br>
+<div class="stat-card">
+<h3 id="totalKeys">0</h3>
+<p>🔑 Totales</p>
+</div>
 
-  <div class="panel">
+<div class="stat-card">
+<h3 id="activeKeys">0</h3>
+<p>✅ Activas</p>
+</div>
 
-    <!-- CREAR -->
-    <div class="section">
+<div class="stat-card">
+<h3 id="expiredKeys">0</h3>
+<p>❌ Expiradas</p>
+</div>
 
-      <h3>Crear Key</h3>
+<div class="stat-card">
+<h3 id="usedKeys">0</h3>
+<p>🔒 Usadas</p>
+</div>
 
-      <select id="duration">
+<div class="stat-card">
+<h3 id="onlineUsersStat">0</h3>
+<p>🟢 Online</p>
+</div>
 
-        <option value="1">1 día</option>
-        <option value="7">7 días</option>
-        <option value="14">2 semanas</option>
-        <option value="30">1 mes</option>
-        <option value="365">1 año</option>
+<div class="stat-card">
+<h3 id="bannedCount">0</h3>
+<p>🚫 Baneados</p>
+</div>
 
-      </select>
+</div>
 
-      <button onclick="createKey()">
-        Generar Key
-      </button>
+<button onclick="logout()">
+Cerrar sesión
+</button>
 
-      <p id="newKey"></p>
+<br><br>
 
-    </div>
+<div class="panel">
 
-    <!-- KEYS -->
-    <div class="section">
+<!-- CREAR -->
 
-      <h3>Mis Keys</h3>
+<div class="section">
 
-      <div id="list"></div>
+<h3>Crear Key</h3>
 
-    </div>
+<select id="duration">
 
-  </div>
+<option value="1">1 día</option>
+<option value="7">7 días</option>
+<option value="30">30 días</option>
+<option value="365">1 año</option>
 
-  <br>
+</select>
 
-  <!-- BANS -->
-  <div class="section">
+<button onclick="createKey()">
+Generar Key
+</button>
 
-    <h3>Banear dispositivo</h3>
+<p id="newKey"></p>
 
-    <input
-      id="banDevice"
-      placeholder="device-id">
+</div>
 
-    <button onclick="banDevice()">
-      Banear
-    </button>
+<!-- KEYS -->
 
-  </div>
+<div class="section">
 
-  <br>
+<h3>Mis Keys</h3>
 
-  <!-- LOGS -->
-  <div class="section">
+<div id="list"></div>
 
-    <h3>Logs Usuarios</h3>
+</div>
 
-    <div id="logs"></div>
+</div>
 
-  </div>
+<br>
+
+<!-- BAN -->
+
+<div class="section">
+
+<h3>Banear dispositivo</h3>
+
+<input
+id="banDevice"
+placeholder="device-id">
+
+<button onclick="banDevice()">
+Banear
+</button>
+
+</div>
+
+<br>
+
+<!-- LOGS -->
+
+<div class="section">
+
+<h3>Logs</h3>
+
+<div id="logs"></div>
+
+</div>
 
 </div>
 
 <script type="module">
 
 /* FIREBASE */
+
 import { initializeApp } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
 
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut
 
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
 
-  getDatabase,
-  ref,
-  set,
-  get,
-  child,
-  remove,
-  onValue
+getDatabase,
+ref,
+set,
+get,
+child
 
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 /* CONFIG */
+
 const firebaseConfig = {
 
-  apiKey:
-  "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
+apiKey:"TU_API_KEY",
 
-  authDomain:
-  "panelsebxrmods.firebaseapp.com",
+authDomain:"TU_AUTH",
 
-  databaseURL:
-  "https://panelsebxrmods-default-rtdb.firebaseio.com",
+databaseURL:"TU_DB_URL",
 
-  projectId:
-  "panelsebxrmods",
+projectId:"TU_PROJECT",
 
-  storageBucket:
-  "panelsebxrmods.firebasestorage.app",
+storageBucket:"TU_BUCKET",
 
-  messagingSenderId:
-  "717339227525",
+messagingSenderId:"TU_SENDER",
 
-  appId:
-  "1:717339227525:web:e3ee653c3d2aeb1b5800ec"
+appId:"TU_APP"
 
 };
 
 /* INIT */
-const app = initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
+const app =
+initializeApp(firebaseConfig);
 
-const db = getDatabase(app);
+const auth =
+getAuth(app);
+
+const db =
+getDatabase(app);
 
 let currentUID = "";
 
 /* LOGIN */
-window.login = async function(){
 
-  const email =
-    document.getElementById("email").value;
+window.login =
+async function(){
 
-  const password =
-    document.getElementById("password").value;
+const email =
+document.getElementById(
+"email"
+).value;
 
-  try{
+const password =
+document.getElementById(
+"password"
+).value;
 
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+try{
 
-  }catch(err){
+await signInWithEmailAndPassword(
+auth,
+email,
+password
+);
 
-    document.getElementById(
-      "error"
-    ).innerHTML =
-      err.message;
+}catch(err){
 
-  }
+document.getElementById(
+"error"
+).innerHTML =
+err.message;
+
+}
 
 };
 
 /* SESSION */
-onAuthStateChanged(auth, (user) => {
 
-  const loginDiv =
-    document.getElementById("login");
+onAuthStateChanged(auth,
+(user)=>{
 
-  const dashDiv =
-    document.getElementById("dash");
+const loginDiv =
+document.getElementById(
+"login"
+);
 
-  if(user){
+const dashDiv =
+document.getElementById(
+"dash"
+);
 
-    currentUID = user.uid;
+if(user){
 
-    loginDiv.style.display = "none";
+currentUID = user.uid;
 
-    dashDiv.style.display = "block";
+const emailName =
+user.email
+.split("@")[0];
 
-    loadKeys();
+document.getElementById(
+"welcomeAdmin"
+).innerHTML =
+"Bienvenido, " +
+emailName;
 
-    loadLogs();
+loginDiv.style.display =
+"none";
 
-  }else{
+dashDiv.style.display =
+"block";
 
-    loginDiv.style.display = "flex";
+loadKeys();
 
-    dashDiv.style.display = "none";
+loadStats();
 
-  }
+loadLogs();
+
+}else{
+
+loginDiv.style.display =
+"flex";
+
+dashDiv.style.display =
+"none";
+
+}
 
 });
 
 /* LOGOUT */
-window.logout = async function(){
 
-  await signOut(auth);
+window.logout =
+async function(){
+
+await signOut(auth);
 
 };
 
-/* GENERADOR */
+/* GENERAR KEY */
+
 function genKey(){
 
-  const chars =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const chars =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-  let key = "";
+let key = "";
 
-  for(let i=0;i<16;i++){
+for(let i=0;i<16;i++){
 
-    key += chars[
-      Math.floor(
-        Math.random() * chars.length
-      )
-    ];
+key += chars[
+Math.floor(
+Math.random() *
+chars.length
+)
+];
 
-    if(i % 4 === 3 && i < 15){
+if(
+i % 4 === 3 &&
+i < 15
+){
 
-      key += "-";
+key += "-";
 
-    }
+}
 
-  }
+}
 
-  return key;
+return key;
 
 }
 
 /* CREAR KEY */
-window.createKey = async function(){
 
-  try{
+window.createKey =
+async function(){
 
-    const days = parseInt(
-      document.getElementById(
-        "duration"
-      ).value
-    );
+const days =
+parseInt(
+document.getElementById(
+"duration"
+).value
+);
 
-    const now = Date.now();
+const now =
+Date.now();
 
-    const expiresAt =
-      now +
-      (
-        days *
-        24 *
-        60 *
-        60 *
-        1000
-      );
+const expiresAt =
+now +
+(days * 86400000);
 
-    const newKey = genKey();
+const newKey =
+genKey();
 
-    const keyData = {
+await set(
 
-      key:newKey,
+ref(
 
-      days:days,
+db,
 
-      createdAt:now,
+"users/" +
+currentUID +
+"/keys/" +
+newKey
 
-      expiresAt:expiresAt,
+),
 
-      used:false,
+{
 
-      usedBy:"",
+key:newKey,
 
-      active:true
+days:days,
 
-    };
+createdAt:now,
 
-    await set(
+expiresAt:expiresAt,
 
-      ref(
-        db,
-        "users/" +
-        currentUID +
-        "/keys/" +
-        newKey
-      ),
+used:false,
 
-      keyData
+usedBy:"",
 
-    );
+active:true,
 
-    document.getElementById(
-      "newKey"
-    ).innerHTML =
-      "<b>" + newKey + "</b>";
+shared:false
 
-    loadKeys();
+}
 
-  }catch(err){
+);
 
-    alert(err.message);
+document.getElementById(
+"newKey"
+).innerHTML =
+newKey;
 
-  }
+loadKeys();
+
+loadStats();
 
 };
 
-/* ACTIVAR */
-window.toggleKey = async function(key, current){
+/* LOAD KEYS */
 
-  await set(
-
-    ref(
-      db,
-      "users/" +
-      currentUID +
-      "/keys/" +
-      key +
-      "/active"
-    ),
-
-    !current
-
-  );
-
-  loadKeys();
-
-}
-
-/* RENOVAR */
-window.renewKey = async function(key, extraDays){
-
-  const snapshot = await get(
-    child(
-      ref(db),
-      "users/" +
-      currentUID +
-      "/keys/" +
-      key
-    )
-  );
-
-  if(snapshot.exists()){
-
-    const data = snapshot.val();
-
-    const newExpire =
-      data.expiresAt +
-      (
-        extraDays *
-        24 *
-        60 *
-        60 *
-        1000
-      );
-
-    await set(
-      ref(
-        db,
-        "users/" +
-        currentUID +
-        "/keys/" +
-        key +
-        "/expiresAt"
-      ),
-      newExpire
-    );
-
-    loadKeys();
-
-  }
-
-}
-
-/* BORRAR EXPIRADAS */
-window.deleteExpired = async function(){
-
-  const snapshot = await get(
-    child(
-      ref(db),
-      "users/" +
-      currentUID +
-      "/keys"
-    )
-  );
-
-  if(snapshot.exists()){
-
-    const data = snapshot.val();
-
-    for(const k of Object.values(data)){
-
-      if(Date.now() > k.expiresAt){
-
-        await remove(
-          ref(
-            db,
-            "users/" +
-            currentUID +
-            "/keys/" +
-            k.key
-          )
-        );
-
-      }
-
-    }
-
-  }
-
-  loadKeys();
-
-}
-
-/* CARGAR KEYS */
 async function loadKeys(){
 
-  const list =
-    document.getElementById("list");
+const list =
+document.getElementById(
+"list"
+);
 
-  list.innerHTML = "";
+list.innerHTML = "";
 
-  const snapshot = await get(
-    child(
-      ref(db),
-      "users/" +
-      currentUID +
-      "/keys"
-    )
-  );
+const snapshot =
+await get(
 
-  if(snapshot.exists()){
+child(
 
-    const data = snapshot.val();
+ref(db),
 
-    Object.values(data)
-    .reverse()
-    .forEach(k => {
+"users/" +
+currentUID +
+"/keys"
 
-      const exp =
-        new Date(k.expiresAt);
+)
 
-      const expired =
-        Date.now() >
-        k.expiresAt;
+);
 
-      const remainingMs =
-        k.expiresAt - Date.now();
+if(snapshot.exists()){
 
-      const remainingHours =
-        Math.floor(
-          remainingMs /
-          (1000 * 60 * 60)
-        );
+const data =
+snapshot.val();
 
-      const remainingDays =
-        Math.floor(
-          remainingHours / 24
-        );
+Object.values(data)
+.reverse()
+.forEach(k=>{
 
-      const div =
-        document.createElement("div");
+const div =
+document.createElement(
+"div"
+);
 
-      div.className = "item";
+div.className =
+"item";
 
-      div.innerHTML = `
+/* ANTI SHARE VISUAL */
 
-        <b>${k.key}</b>
+if(k.shared){
 
-        <div class="small">
-          ${k.days} días
-        </div>
+div.style.border =
+"2px solid red";
 
-        <div class="small">
-          Expira:
-          ${exp.toLocaleString()}
-        </div>
+}
 
-        <div class="small">
-          Tiempo restante:
-          ${
-            expired
-            ? "0 horas"
-            : remainingDays > 0
-            ? remainingDays + " días"
-            : remainingHours + " horas"
-          }
-        </div>
+const exp =
+new Date(
+k.expiresAt
+);
 
-        <div class="small">
-          Estado:
-          ${
-            expired
-            ? "❌ Expirada"
-            : k.active
-            ? "✅ Activa"
-            : "⛔ Desactivada"
-          }
-        </div>
+div.innerHTML = `
 
-        <div class="small">
-          ${
-            k.used
-            ? "🔒 Usada por: " + k.usedBy
-            : "🟢 Sin usar"
-          }
-        </div>
+<b>${k.key}</b>
 
-        <div class="actions">
+<div class="small">
+${k.days} días
+</div>
 
-          <button onclick="toggleKey('${k.key}', ${k.active})">
-            ${k.active ? "Desactivar" : "Activar"}
-          </button>
+<div class="small">
+⏳ Expira:
+${exp.toLocaleString()}
+</div>
 
-          <button onclick="renewKey('${k.key}', 30)">
-            +30 días
-          </button>
+<div class="small">
+📱 Device:
+${k.usedBy || "Sin usar"}
+</div>
 
-        </div>
+<div class="small">
 
-      `;
+Estado:
 
-      list.appendChild(div);
+${
+k.shared
+? "🚫 COMPARTIDA"
+: k.used
+? "🔒 En uso"
+: "🟢 Disponible"
+}
 
-    });
+</div>
 
-  }
+`;
+
+list.appendChild(div);
+
+});
+
+}
+
+}
+
+/* STATS */
+
+async function loadStats(){
+
+let total = 0;
+let active = 0;
+let expired = 0;
+let used = 0;
+
+const snapshot =
+await get(
+
+child(
+
+ref(db),
+
+"users/" +
+currentUID +
+"/keys"
+
+)
+
+);
+
+if(snapshot.exists()){
+
+const data =
+snapshot.val();
+
+Object.values(data)
+.forEach(k=>{
+
+total++;
+
+if(
+Date.now() >
+k.expiresAt
+){
+
+expired++;
+
+}else{
+
+active++;
+
+}
+
+if(k.used){
+
+used++;
+
+}
+
+});
+
+}
+
+document.getElementById(
+"totalKeys"
+).innerHTML =
+total;
+
+document.getElementById(
+"activeKeys"
+).innerHTML =
+active;
+
+document.getElementById(
+"expiredKeys"
+).innerHTML =
+expired;
+
+document.getElementById(
+"usedKeys"
+).innerHTML =
+used;
+
+/* ONLINE */
+
+const onlineSnap =
+await get(
+
+child(
+ref(db),
+"onlineUsers"
+)
+
+);
+
+if(onlineSnap.exists()){
+
+document.getElementById(
+"onlineUsersStat"
+).innerHTML =
+
+Object.keys(
+onlineSnap.val()
+).length;
+
+}
+
+/* BANNED */
+
+const bannedSnap =
+await get(
+
+child(
+ref(db),
+"bannedDevices"
+)
+
+);
+
+if(bannedSnap.exists()){
+
+document.getElementById(
+"bannedCount"
+).innerHTML =
+
+Object.keys(
+bannedSnap.val()
+).length;
+
+}
 
 }
 
 /* LOGS */
+
 async function loadLogs(){
 
-  const logsDiv =
-    document.getElementById("logs");
+const logsDiv =
+document.getElementById(
+"logs"
+);
 
-  logsDiv.innerHTML = "";
+logsDiv.innerHTML = "";
 
-  const snapshot = await get(
-    child(ref(db), "logs")
-  );
+const snapshot =
+await get(
 
-  if(snapshot.exists()){
+child(
+ref(db),
+"logs"
+)
 
-    const data = snapshot.val();
+);
 
-    Object.values(data)
-    .reverse()
-    .forEach(log => {
+if(snapshot.exists()){
 
-      const div =
-        document.createElement("div");
+const data =
+snapshot.val();
 
-      div.className = "item";
+Object.values(data)
+.reverse()
+.forEach(log=>{
 
-      div.innerHTML = `
+const div =
+document.createElement(
+"div"
+);
 
-        <div>
-          📱 ${log.device}
-        </div>
+div.className =
+"item";
 
-        <div class="small">
-          🔑 ${log.key}
-        </div>
+div.innerHTML = `
 
-        <div class="small">
-          🕒
-          ${new Date(log.time).toLocaleString()}
-        </div>
+📱 ${log.device}
 
-      `;
+<div class="small">
+🔑 ${log.key}
+</div>
 
-      logsDiv.appendChild(div);
+`;
 
-    });
+logsDiv.appendChild(div);
 
-  }
+});
+
+}
 
 }
 
 /* BAN DEVICE */
-window.banDevice = async function(){
 
-  const device = document
-    .getElementById("banDevice")
-    .value;
+window.banDevice =
+async function(){
 
-  await set(
+const device =
+document.getElementById(
+"banDevice"
+).value;
 
-    ref(
-      db,
-      "bannedDevices/" + device
-    ),
+await set(
 
-    true
+ref(
 
-  );
+db,
 
-  alert("Dispositivo baneado");
+"bannedDevices/" +
+device
 
-}
+),
 
-/* AUTO UPDATE */
-setInterval(() => {
+true
 
-  loadKeys();
+);
 
-}, 60000);
+alert(
+"Dispositivo baneado"
+);
 
-/* AUTO DELETE */
-setInterval(async () => {
-
-  const snapshot = await get(
-    child(
-      ref(db),
-      "users/" +
-      currentUID +
-      "/keys"
-    )
-  );
-
-  if(snapshot.exists()){
-
-    const data = snapshot.val();
-
-    for(const k of Object.values(data)){
-
-      if(Date.now() > k.expiresAt){
-
-        await remove(
-          ref(
-            db,
-            "users/" +
-            currentUID +
-            "/keys/" +
-            k.key
-          )
-        );
-
-      }
-
-    }
-
-  }
-
-}, 60000);
-
-/* ONLINE */
-onValue(ref(db, "onlineUsers"), snapshot => {
-
-  if(snapshot.exists()){
-
-    const total =
-      Object.keys(
-        snapshot.val()
-      ).length;
-
-    document.getElementById(
-      "onlineCount"
-    ).innerHTML =
-      "Usuarios online: " + total;
-
-  }else{
-
-    document.getElementById(
-      "onlineCount"
-    ).innerHTML =
-      "Usuarios online: 0";
-
-  }
-
-});
+};
 
 </script>
 
 </body>
 </html>
+```
