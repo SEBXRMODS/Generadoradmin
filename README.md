@@ -105,8 +105,6 @@ border:2px solid red;
 
 <body>
 
-<!-- LOGIN -->
-
 <div id="login">
 
 <div class="box">
@@ -132,8 +130,6 @@ Entrar
 </div>
 
 </div>
-
-<!-- DASH -->
 
 <div id="dash">
 
@@ -248,15 +244,14 @@ getDatabase,
 ref,
 set,
 get,
-child
+child,
+update
 
 }
 
 from
 
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-/* FIREBASE CONFIG */
 
 const firebaseConfig = {
 
@@ -276,8 +271,6 @@ appId: "1:717339227525:web:98101a11654e25a45800ec"
 
 };
 
-/* INIT */
-
 const app =
 initializeApp(firebaseConfig);
 
@@ -288,8 +281,6 @@ const db =
 getDatabase(app);
 
 let currentUID = "";
-
-/* LOGIN */
 
 async function login(){
 
@@ -323,8 +314,6 @@ err.message;
 }
 
 }
-
-/* AUTH */
 
 onAuthStateChanged(
 auth,
@@ -364,8 +353,6 @@ loadLogs();
 
 });
 
-/* GENERATE KEY */
-
 function generateKey(){
 
 const chars =
@@ -396,8 +383,6 @@ result += "-";
 return result;
 
 }
-
-/* CREATE KEY */
 
 async function createKey(){
 
@@ -464,7 +449,27 @@ loadStats();
 
 }
 
-/* LOAD KEYS */
+async function toggleKey(key, active){
+
+await update(
+
+ref(
+db,
+"users/" +
+currentUID +
+"/keys/" +
+key
+),
+
+{
+active: !active
+}
+
+);
+
+loadKeys();
+
+}
 
 async function loadKeys(){
 
@@ -544,6 +549,28 @@ k.shared
 
 </div>
 
+<div class="small">
+
+Estado:
+${
+k.active
+? "🟢 Activa"
+: "❌ Desactivada"
+}
+
+</div>
+
+<button
+onclick="toggleKey('${k.key}', ${k.active})">
+
+${
+k.active
+? "❌ Desactivar"
+: "✅ Activar"
+}
+
+</button>
+
 `;
 
 list.appendChild(div);
@@ -553,8 +580,6 @@ list.appendChild(div);
 }
 
 }
-
-/* STATS */
 
 async function loadStats(){
 
@@ -626,8 +651,6 @@ onlineSnap.val()
 
 }
 
-/* LOGS */
-
 async function loadLogs(){
 
 const logs =
@@ -678,8 +701,6 @@ logs.appendChild(div);
 
 }
 
-/* BAN DEVICE */
-
 async function banDevice(){
 
 const device =
@@ -707,8 +728,6 @@ alert(
 );
 
 }
-
-/* BUTTONS */
 
 window.onload = () => {
 
@@ -740,6 +759,9 @@ banDevice
 );
 
 };
+
+window.toggleKey =
+toggleKey;
 
 </script>
 
