@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>SaaS Admin Panel</title>
+<title>Panel SaaS Admin</title>
 
 <style>
 body {
@@ -13,7 +13,7 @@ body {
 }
 
 /* LOGIN */
-.login {
+#login {
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -52,37 +52,23 @@ button:hover {
 }
 
 /* DASHBOARD */
-.dashboard {
+#dash {
   display: none;
   padding: 20px;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.cards {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
 .card {
-  flex: 1;
   background: #111a2e;
-  padding: 15px;
+  padding: 10px;
   border-radius: 10px;
-  text-align: center;
+  margin: 5px;
 }
 
-/* PANEL */
 .panel {
-  margin-top: 20px;
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 20px;
+  margin-top: 20px;
 }
 
 .section {
@@ -91,39 +77,18 @@ button:hover {
   border-radius: 10px;
 }
 
-/* LISTA */
-.list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
 .item {
   background: #0f172a;
   padding: 10px;
-  margin-bottom: 8px;
+  margin-top: 8px;
   border-radius: 6px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
 }
 
 .small {
   font-size: 12px;
   opacity: 0.7;
-}
-
-.actions button {
-  width: auto;
-  padding: 5px 8px;
-  margin-left: 5px;
-  font-size: 12px;
-}
-
-.delete {
-  background: #ef4444;
-}
-.copy {
-  background: #10b981;
 }
 </style>
 </head>
@@ -131,42 +96,28 @@ button:hover {
 <body>
 
 <!-- LOGIN -->
-<div class="login" id="login">
+<div id="login">
   <div class="box">
     <h2>Admin Login</h2>
+
     <input id="user" placeholder="Usuario">
     <input id="pass" type="password" placeholder="Contraseña">
+
     <button onclick="login()">Entrar</button>
+
     <p id="error"></p>
   </div>
 </div>
 
 <!-- DASHBOARD -->
-<div class="dashboard" id="dash">
+<div id="dash">
 
-  <div class="header">
-    <h2>Panel SaaS</h2>
-    <button onclick="logout()">Salir</button>
-  </div>
-
-  <div class="cards">
-    <div class="card">
-      <h3 id="totalKeys">0</h3>
-      <p>Total Keys</p>
-    </div>
-    <div class="card">
-      <h3 id="activeKeys">0</h3>
-      <p>Activas</p>
-    </div>
-    <div class="card">
-      <h3 id="usedKeys">0</h3>
-      <p>Usadas</p>
-    </div>
-  </div>
+  <h2>Panel SaaS</h2>
+  <button onclick="logout()">Cerrar sesión</button>
 
   <div class="panel">
 
-    <!-- CREAR KEY -->
+    <!-- CREAR -->
     <div class="section">
       <h3>Crear Key</h3>
 
@@ -186,12 +137,11 @@ button:hover {
     <!-- LISTA -->
     <div class="section">
       <h3>Keys</h3>
-      <input placeholder="Buscar..." oninput="search(this.value)">
-
-      <div class="list" id="list"></div>
+      <div id="list"></div>
     </div>
 
   </div>
+
 </div>
 
 <script>
@@ -199,16 +149,17 @@ button:hover {
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "1234";
 
+let keys = [];
+
 function login() {
-  const u = user.value;
-  const p = pass.value;
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
 
   if (u === ADMIN_USER && p === ADMIN_PASS) {
-    login.style.display = "none";
-    dash.style.display = "block";
-    render();
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dash").style.display = "block";
   } else {
-    error.innerText = "Credenciales incorrectas";
+    document.getElementById("error").innerText = "Credenciales incorrectas";
   }
 }
 
@@ -216,89 +167,43 @@ function logout() {
   location.reload();
 }
 
-/* ---------------- DB LOCAL (SIMULADO) ---------------- */
-let keys = [];
-
 /* ---------------- GENERAR KEY ---------------- */
 function genKey() {
-  const c = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let k = "";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let key = "";
 
   for (let i = 0; i < 16; i++) {
-    k += c[Math.floor(Math.random() * c.length)];
-    if (i % 4 === 3 && i < 15) k += "-";
+    key += chars[Math.floor(Math.random() * chars.length)];
+    if (i % 4 === 3 && i < 15) key += "-";
   }
-  return k;
+
+  return key;
 }
 
 /* ---------------- CREAR KEY ---------------- */
 function createKey() {
-  const days = parseInt(duration.value);
+  const days = parseInt(document.getElementById("duration").value);
 
   const key = {
     id: Date.now(),
     key: genKey(),
-    days,
-    used: false,
-    created: new Date()
+    days: days
   };
 
   keys.push(key);
 
-  newKey.innerHTML = "KEY: <b>" + key.key + "</b>";
+  document.getElementById("newKey").innerHTML =
+    "KEY: <b>" + key.key + "</b>";
 
   render();
 }
 
 /* ---------------- RENDER ---------------- */
 function render() {
-
-  totalKeys.innerText = keys.length;
-  activeKeys.innerText = keys.filter(k => !k.used).length;
-  usedKeys.innerText = keys.filter(k => k.used).length;
-
+  const list = document.getElementById("list");
   list.innerHTML = "";
 
   keys.forEach(k => {
-
-    const div = document.createElement("div");
-    div.className = "item";
-
-    div.innerHTML = `
-      <div>
-        <b>${k.key}</b>
-        <div class="small">${k.days} días</div>
-      </div>
-
-      <div class="actions">
-        <button class="copy" onclick="copyKey('${k.key}')">Copiar</button>
-        <button class="delete" onclick="deleteKey(${k.id})">X</button>
-      </div>
-    `;
-
-    list.appendChild(div);
-  });
-}
-
-/* ---------------- COPY ---------------- */
-function copyKey(k) {
-  navigator.clipboard.writeText(k);
-  alert("Copiada");
-}
-
-/* ---------------- DELETE ---------------- */
-function deleteKey(id) {
-  keys = keys.filter(k => k.id !== id);
-  render();
-}
-
-/* ---------------- SEARCH ---------------- */
-function search(v) {
-  const filtered = keys.filter(k => k.key.includes(v.toUpperCase()));
-
-  list.innerHTML = "";
-
-  filtered.forEach(k => {
     const div = document.createElement("div");
     div.className = "item";
 
