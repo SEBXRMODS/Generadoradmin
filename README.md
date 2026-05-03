@@ -2,33 +2,36 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Panel de Keys</title>
+<title>SaaS Admin Panel</title>
 
 <style>
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+  background: #0b1220;
   color: white;
+}
+
+/* LOGIN */
+.login {
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 }
 
-.login, .panel {
-  background: #020617;
+.box {
+  background: #111a2e;
   padding: 30px;
   border-radius: 12px;
   width: 320px;
   text-align: center;
-  box-shadow: 0 0 20px rgba(0,0,0,0.6);
 }
 
 input, select {
   width: 100%;
   padding: 10px;
-  margin: 10px 0;
+  margin: 8px 0;
   border-radius: 6px;
   border: none;
 }
@@ -36,7 +39,7 @@ input, select {
 button {
   width: 100%;
   padding: 10px;
-  margin-top: 10px;
+  margin-top: 8px;
   background: #3b82f6;
   border: none;
   color: white;
@@ -48,146 +51,266 @@ button:hover {
   background: #2563eb;
 }
 
-.hidden {
+/* DASHBOARD */
+.dashboard {
   display: none;
+  padding: 20px;
 }
 
-.key-box {
-  margin-top: 15px;
-  background: #111827;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.card {
+  flex: 1;
+  background: #111a2e;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+/* PANEL */
+.panel {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+}
+
+.section {
+  background: #111a2e;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* LISTA */
+.list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.item {
+  background: #0f172a;
   padding: 10px;
+  margin-bottom: 8px;
   border-radius: 6px;
-  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.logout {
+.small {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.actions button {
+  width: auto;
+  padding: 5px 8px;
+  margin-left: 5px;
+  font-size: 12px;
+}
+
+.delete {
   background: #ef4444;
+}
+.copy {
+  background: #10b981;
 }
 </style>
 </head>
 
 <body>
 
-<div class="login" id="loginBox">
-  <h2>Login Admin</h2>
-  <input type="text" id="user" placeholder="Usuario">
-  <input type="password" id="pass" placeholder="Contraseña">
-  <button onclick="login()">Entrar</button>
-  <p id="error"></p>
+<!-- LOGIN -->
+<div class="login" id="login">
+  <div class="box">
+    <h2>Admin Login</h2>
+    <input id="user" placeholder="Usuario">
+    <input id="pass" type="password" placeholder="Contraseña">
+    <button onclick="login()">Entrar</button>
+    <p id="error"></p>
+  </div>
 </div>
 
-<div class="panel hidden" id="panelBox">
-  <h2>Generador de Keys</h2>
+<!-- DASHBOARD -->
+<div class="dashboard" id="dash">
 
-  <select id="duracion">
-    <option value="1">1 día</option>
-    <option value="2">2 días</option>
-    <option value="3">3 días</option>
-    <option value="4">4 días</option>
-    <option value="5">5 días</option>
-    <option value="6">6 días</option>
-    <option value="7">7 días</option>
-    <option value="14">2 semanas</option>
-    <option value="30">1 mes</option>
-    <option value="365">1 año</option>
-  </select>
+  <div class="header">
+    <h2>Panel SaaS</h2>
+    <button onclick="logout()">Salir</button>
+  </div>
 
-  <button onclick="generar()">Generar Key</button>
-  <button class="logout" onclick="logout()">Cerrar sesión</button>
+  <div class="cards">
+    <div class="card">
+      <h3 id="totalKeys">0</h3>
+      <p>Total Keys</p>
+    </div>
+    <div class="card">
+      <h3 id="activeKeys">0</h3>
+      <p>Activas</p>
+    </div>
+    <div class="card">
+      <h3 id="usedKeys">0</h3>
+      <p>Usadas</p>
+    </div>
+  </div>
 
-  <div id="resultado"></div>
+  <div class="panel">
+
+    <!-- CREAR KEY -->
+    <div class="section">
+      <h3>Crear Key</h3>
+
+      <select id="duration">
+        <option value="1">1 día</option>
+        <option value="7">7 días</option>
+        <option value="14">2 semanas</option>
+        <option value="30">1 mes</option>
+        <option value="365">1 año</option>
+      </select>
+
+      <button onclick="createKey()">Generar</button>
+
+      <p id="newKey"></p>
+    </div>
+
+    <!-- LISTA -->
+    <div class="section">
+      <h3>Keys</h3>
+      <input placeholder="Buscar..." oninput="search(this.value)">
+
+      <div class="list" id="list"></div>
+    </div>
+
+  </div>
 </div>
 
 <script>
+/* ---------------- LOGIN ---------------- */
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "1234";
 
-let intervalo = null;
-
-// LOGIN
 function login() {
-  const u = document.getElementById("user").value;
-  const p = document.getElementById("pass").value;
+  const u = user.value;
+  const p = pass.value;
 
   if (u === ADMIN_USER && p === ADMIN_PASS) {
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("panelBox").classList.remove("hidden");
+    login.style.display = "none";
+    dash.style.display = "block";
+    render();
   } else {
-    document.getElementById("error").innerText = "Credenciales incorrectas";
+    error.innerText = "Credenciales incorrectas";
   }
 }
 
 function logout() {
-  document.getElementById("panelBox").classList.add("hidden");
-  document.getElementById("loginBox").classList.remove("hidden");
+  location.reload();
 }
 
-// GENERAR KEY
-function generarKey() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+/* ---------------- DB LOCAL (SIMULADO) ---------------- */
+let keys = [];
 
-  function bloque() {
-    let str = "";
-    for (let i = 0; i < 4; i++) {
-      str += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return str;
+/* ---------------- GENERAR KEY ---------------- */
+function genKey() {
+  const c = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let k = "";
+
+  for (let i = 0; i < 16; i++) {
+    k += c[Math.floor(Math.random() * c.length)];
+    if (i % 4 === 3 && i < 15) k += "-";
   }
-
-  return `${bloque()}-${bloque()}-${bloque()}`;
+  return k;
 }
 
-// FORMATO TIEMPO
-function formatearTiempo(ms) {
-  let segundos = Math.floor(ms / 1000);
+/* ---------------- CREAR KEY ---------------- */
+function createKey() {
+  const days = parseInt(duration.value);
 
-  const dias = Math.floor(segundos / (3600 * 24));
-  segundos %= (3600 * 24);
+  const key = {
+    id: Date.now(),
+    key: genKey(),
+    days,
+    used: false,
+    created: new Date()
+  };
 
-  const horas = Math.floor(segundos / 3600);
-  segundos %= 3600;
+  keys.push(key);
 
-  const minutos = Math.floor(segundos / 60);
-  segundos %= 60;
+  newKey.innerHTML = "KEY: <b>" + key.key + "</b>";
 
-  return `${dias}d ${horas}h ${minutos}m ${segundos}s`;
+  render();
 }
 
-// GENERAR + CONTADOR
-function generar() {
-  if (intervalo) clearInterval(intervalo);
+/* ---------------- RENDER ---------------- */
+function render() {
 
-  const select = document.getElementById("duracion");
-  const dias = parseInt(select.value);
-  const texto = select.options[select.selectedIndex].text;
+  totalKeys.innerText = keys.length;
+  activeKeys.innerText = keys.filter(k => !k.used).length;
+  usedKeys.innerText = keys.filter(k => k.used).length;
 
-  const key = generarKey();
+  list.innerHTML = "";
 
-  const ahora = new Date();
-  const expiracion = new Date(ahora.getTime() + dias * 24 * 60 * 60 * 1000);
+  keys.forEach(k => {
 
-  const resultado = document.getElementById("resultado");
+    const div = document.createElement("div");
+    div.className = "item";
 
-  resultado.innerHTML = `
-    <div class="key-box">
-      KEY: ${key} <br>
-      DURACIÓN: ${texto} <br>
-      EXPIRA EN: <span id="contador"></span>
-    </div>
-  `;
+    div.innerHTML = `
+      <div>
+        <b>${k.key}</b>
+        <div class="small">${k.days} días</div>
+      </div>
 
-  intervalo = setInterval(() => {
-    const ahora = new Date();
-    const restante = expiracion - ahora;
+      <div class="actions">
+        <button class="copy" onclick="copyKey('${k.key}')">Copiar</button>
+        <button class="delete" onclick="deleteKey(${k.id})">X</button>
+      </div>
+    `;
 
-    if (restante <= 0) {
-      document.getElementById("contador").innerText = "⛔ Expirada";
-      clearInterval(intervalo);
-      return;
-    }
+    list.appendChild(div);
+  });
+}
 
-    document.getElementById("contador").innerText = formatearTiempo(restante);
-  }, 1000);
+/* ---------------- COPY ---------------- */
+function copyKey(k) {
+  navigator.clipboard.writeText(k);
+  alert("Copiada");
+}
+
+/* ---------------- DELETE ---------------- */
+function deleteKey(id) {
+  keys = keys.filter(k => k.id !== id);
+  render();
+}
+
+/* ---------------- SEARCH ---------------- */
+function search(v) {
+  const filtered = keys.filter(k => k.key.includes(v.toUpperCase()));
+
+  list.innerHTML = "";
+
+  filtered.forEach(k => {
+    const div = document.createElement("div");
+    div.className = "item";
+
+    div.innerHTML = `
+      <div>
+        <b>${k.key}</b>
+        <div class="small">${k.days} días</div>
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
 }
 </script>
 
