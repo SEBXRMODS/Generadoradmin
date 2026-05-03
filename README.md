@@ -115,8 +115,6 @@ button:hover{
 
 <body>
 
-<!-- LOGIN -->
-
 <div id="login">
 
 <div class="box">
@@ -142,8 +140,6 @@ Entrar
 </div>
 
 </div>
-
-<!-- DASH -->
 
 <div id="dash">
 
@@ -278,8 +274,6 @@ child
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* FIREBASE CONFIG */
-
 const firebaseConfig = {
 
 apiKey:"TU_API_KEY",
@@ -297,8 +291,6 @@ messagingSenderId:"TU_SENDER_ID",
 appId:"TU_APP_ID"
 
 };
-
-/* INIT */
 
 const app =
 initializeApp(firebaseConfig);
@@ -682,45 +674,7 @@ document.getElementById(
 ).innerHTML =
 used;
 
-const onlineSnap =
-await get(
-child(ref(db),
-"onlineUsers")
-);
-
-if(onlineSnap.exists()){
-
-document.getElementById(
-"onlineUsersStat"
-).innerHTML =
-
-Object.keys(
-onlineSnap.val()
-).length;
-
 }
-
-const bannedSnap =
-await get(
-child(ref(db),
-"bannedDevices")
-);
-
-if(bannedSnap.exists()){
-
-document.getElementById(
-"bannedCount"
-).innerHTML =
-
-Object.keys(
-bannedSnap.val()
-).length;
-
-}
-
-}
-
-/* LOGS */
 
 async function loadLogs(){
 
@@ -771,8 +725,6 @@ logsDiv.appendChild(div);
 }
 
 }
-
-/* BAN DEVICE */
 
 async function banDevice(){
 
@@ -842,5 +794,5 @@ banDevice
 
 </script>
 
-</body
+</body>
 </html>
