@@ -1,978 +1,260 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Panel Admin SaaS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin</title>
 
 <style>
-
-body{
-margin:0;
-background:#0b1220;
-font-family:Arial;
-color:white;
-}
-
-#login{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
-.box{
-background:#111a2e;
-padding:30px;
-border-radius:12px;
-width:330px;
-box-shadow:0 0 30px rgba(0,0,0,.4);
-}
-
-input,
-select{
-width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:6px;
-box-sizing:border-box;
-background:#0f172a;
-color:white;
-}
-
-button{
-width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:6px;
-background:#3b82f6;
-color:white;
-cursor:pointer;
-font-weight:bold;
-transition:.2s;
-}
-
-button:hover{
-background:#2563eb;
-}
-
-#error{
-color:red;
-margin-top:10px;
-}
-
-#dash{
-display:none;
-padding:20px;
-}
-
-.card{
-background:#111a2e;
-padding:15px;
-border-radius:10px;
-margin-top:10px;
-box-shadow:0 0 20px rgba(0,0,0,.2);
-}
-
-.grid{
-display:grid;
-grid-template-columns:
-repeat(auto-fit,minmax(200px,1fr));
-gap:15px;
-margin-top:20px;
-}
-
-.key-item{
-background:#0f172a;
-padding:12px;
-border-radius:8px;
-margin-top:10px;
-}
-
-.small{
-font-size:12px;
-opacity:.7;
-}
-
-.shared{
-border:2px solid red;
-}
-
-.actions{
-display:grid;
-gap:8px;
-margin-top:10px;
-}
-
-h2,h3{
-margin:0;
-margin-bottom:10px;
-}
-
+body{margin:0;background:#0b1220;font-family:Arial;color:white}
+#login{height:100vh;display:flex;justify-content:center;align-items:center}
+.box{background:#111a2e;padding:30px;border-radius:12px;width:330px}
+input,select{width:100%;padding:12px;margin-top:10px;border:none;border-radius:6px;background:#0f172a;color:white}
+button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:6px;background:#3b82f6;color:white;cursor:pointer}
+#dash{display:none;padding:20px}
+.card{background:#111a2e;padding:15px;border-radius:10px;margin-top:10px}
+.key-item{background:#0f172a;padding:12px;border-radius:8px;margin-top:10px}
+.actions{display:grid;gap:6px;margin-top:10px}
 </style>
-
 </head>
 
 <body>
 
-<!-- LOGIN -->
-
 <div id="login">
-
 <div class="box">
-
-<h2>
-🔐 Admin Login
-</h2>
-
-<input
-id="email"
-type="email"
-placeholder="Correo">
-
-<input
-id="password"
-type="password"
-placeholder="Contraseña">
-
-<button id="loginBtn">
-Entrar
-</button>
-
+<h2>Admin Login</h2>
+<input id="email" placeholder="Correo">
+<input id="password" type="password" placeholder="Contraseña">
+<button id="loginBtn">Entrar</button>
 <p id="error"></p>
-
 </div>
-
 </div>
-
-<!-- DASHBOARD -->
 
 <div id="dash">
 
 <h2 id="welcome"></h2>
-
-<button id="logoutBtn">
-Cerrar sesión
-</button>
-
-<div class="grid">
+<button id="logoutBtn">Cerrar sesión</button>
 
 <div class="card">
-<h3 id="totalKeys">0</h3>
-<p>🔑 Keys</p>
-</div>
-
-<div class="card">
-<h3 id="onlineUsers">0</h3>
-<p>🟢 Online</p>
-</div>
-
-<div class="card">
-<h3 id="sharedKeys">0</h3>
-<p>🚫 Compartidas</p>
-</div>
-
-</div>
-
-<!-- GENERAR -->
-
-<div class="card">
-
-<h3>
-Generar Key
-</h3>
+<h3>Generar Key</h3>
 
 <select id="duration">
-
-<option value="1">
-1 día
-</option>
-
-<option value="3">
-3 días
-</option>
-
-<option value="7">
-7 días
-</option>
-
-<option value="30">
-30 días
-</option>
-
-<option value="365">
-365 días
-</option>
-
+<option value="1">1 día</option>
+<option value="3">3 días</option>
+<option value="7">7 días</option>
+<option value="30">30 días</option>
 </select>
 
-<button id="createKeyBtn">
-Generar Key
-</button>
-
+<button id="createKeyBtn">Generar</button>
 <p id="newKey"></p>
 
 </div>
 
-<!-- KEYS -->
-
 <div class="card">
-
-<h3>
-Mis Keys
-</h3>
-
+<h3>Keys</h3>
 <div id="keysList"></div>
-
-</div>
-
-<!-- BAN -->
-
-<div class="card">
-
-<h3>
-Banear Dispositivo
-</h3>
-
-<input
-id="banDevice"
-placeholder="DEV-XXXX">
-
-<button id="banBtn">
-Banear
-</button>
-
-</div>
-
-<!-- LOGS -->
-
-<div class="card">
-
-<h3>
-Logs
-</h3>
-
-<div id="logs"></div>
-
 </div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp }
-
-from
-
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-
-getAuth,
-signInWithEmailAndPassword,
-onAuthStateChanged,
-signOut
-
-}
-
-from
-
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-import {
-
-getDatabase,
-ref,
-set,
-get,
-child,
-update
-
-}
-
-from
-
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-/* FIREBASE */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, set, get, update, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-
-apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
-
-authDomain: "panelsebxrmods.firebaseapp.com",
-
-databaseURL: "https://panelsebxrmods-default-rtdb.firebaseio.com",
-
-projectId: "panelsebxrmods",
-
-storageBucket: "panelsebxrmods.firebasestorage.app",
-
-messagingSenderId: "717339227525",
-
-appId: "1:717339227525:web:98101a11654e25a45800ec"
-
+apiKey: "TU_API_KEY",
+authDomain: "TU_AUTH",
+databaseURL: "TU_DB",
+projectId: "TU_ID",
+storageBucket: "TU_BUCKET",
+messagingSenderId: "TU_MSG",
+appId: "TU_APP"
 };
 
-const app =
-initializeApp(firebaseConfig);
-
-const auth =
-getAuth(app);
-
-const db =
-getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
 
 let currentUID = "";
 
 /* LOGIN */
-
 async function login(){
-
-const email =
-document.getElementById(
-"email"
-).value;
-
-const password =
-document.getElementById(
-"password"
-).value;
+const email = emailInput.value;
+const pass = passwordInput.value;
 
 try{
-
-await signInWithEmailAndPassword(
-auth,
-email,
-password
-);
-
-}catch(err){
-
-document.getElementById(
-"error"
-).innerHTML =
-err.message;
-
+await signInWithEmailAndPassword(auth,email,pass);
+}catch(e){
+error.innerText = e.message;
 }
-
 }
 
 /* LOGOUT */
-
 async function logout(){
-
 await signOut(auth);
-
-document.getElementById(
-"dash"
-).style.display =
-"none";
-
-document.getElementById(
-"login"
-).style.display =
-"flex";
-
+location.reload();
 }
 
 /* AUTH */
-
-onAuthStateChanged(
-auth,
-async(user)=>{
-
+onAuthStateChanged(auth, async user=>{
 if(user){
 
-currentUID =
-user.uid;
+currentUID = user.uid;
 
-document.getElementById(
-"login"
-).style.display =
-"none";
+loginDiv.style.display="none";
+dash.style.display="block";
 
-document.getElementById(
-"dash"
-).style.display =
-"block";
-
-const name =
-user.email.split("@")[0];
-
-document.getElementById(
-"welcome"
-).innerHTML =
-"👋 Bienvenido " + name;
+welcome.innerText = "Bienvenido " + user.email.split("@")[0];
 
 loadKeys();
 
-loadStats();
-
-loadLogs();
-
 }
-
 });
 
-/* GENERATE KEY */
-
+/* GENERAR KEY */
 function generateKey(){
-
-const chars =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-let result = "";
-
+const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+let key="";
 for(let i=0;i<16;i++){
-
-result += chars[
-Math.floor(
-Math.random() *
-chars.length
-)
-];
-
-if(
-i % 4 === 3 &&
-i < 15
-){
-
-result += "-";
-
+key+=chars[Math.floor(Math.random()*chars.length)];
+if(i%4===3 && i<15) key+="-";
+}
+return key;
 }
 
-}
-
-return result;
-
-}
-
-/* CREATE KEY */
-
+/* CREAR KEY */
 async function createKey(){
 
-const days =
-parseInt(
-document.getElementById(
-"duration"
-).value
-);
+const days = parseInt(duration.value);
+const now = Date.now();
+const expiresAt = now + days*86400000;
+const key = generateKey();
 
-const now =
-Date.now();
+/* PRIVADO */
+await set(ref(db,"users/"+currentUID+"/keys/"+key),{
+key,days,createdAt:now,expiresAt,
+used:false,usedBy:"",active:true,shared:false
+});
 
-const expiresAt =
-now +
-(days * 86400000);
-
-const key =
-generateKey();
-
-await set(
-
-ref(
-db,
-"users/" +
-currentUID +
-"/keys/" +
-key
-),
-
-{
-
-key:key,
-days:days,
-createdAt:now,
-expiresAt:expiresAt,
-used:false,
-usedBy:"",
+/* PUBLICO */
+await set(ref(db,"publicKeys/"+key),{
+uid:currentUID,
+expiresAt,
 active:true,
-shared:false
+used:false,
+usedBy:""
+});
 
-}
-
-);
-
-document.getElementById(
-"newKey"
-).innerHTML =
-"✅ " + key;
+newKey.innerText = key;
 
 loadKeys();
-
-loadStats();
-
 }
 
-/* TOGGLE KEY */
+/* TOGGLE */
+async function toggleKey(key,active){
 
-async function toggleKey(key, active){
+await update(ref(db,"users/"+currentUID+"/keys/"+key),{
+active:!active
+});
 
-await update(
-
-ref(
-db,
-"users/" +
-currentUID +
-"/keys/" +
-key
-),
-
-{
-active: !active
-}
-
-);
+await update(ref(db,"publicKeys/"+key),{
+active:!active
+});
 
 loadKeys();
-
 }
 
 /* ADD TIME */
+async function addTime(key,days){
 
-async function addTime(key, days){
+const snap = await get(ref(db,"users/"+currentUID+"/keys/"+key));
+if(!snap.exists()) return;
 
-const keyRef =
-ref(
-db,
-"users/" +
-currentUID +
-"/keys/" +
-key
-);
+const data = snap.val();
+const newExpire = data.expiresAt + days*86400000;
 
-const snapshot =
-await get(keyRef);
-
-if(!snapshot.exists()) return;
-
-const data =
-snapshot.val();
-
-const newExpire =
-data.expiresAt +
-(days * 86400000);
-
-await update(
-
-keyRef,
-
-{
+await update(ref(db,"users/"+currentUID+"/keys/"+key),{
 expiresAt:newExpire
-}
+});
 
-);
-
-loadKeys();
-
-}
-
-/* RESET DEVICE */
-
-async function resetDevice(key){
-
-await update(
-
-ref(
-db,
-"users/" +
-currentUID +
-"/keys/" +
-key
-),
-
-{
-
-used:false,
-usedBy:"",
-shared:false
-
-}
-
-);
+await update(ref(db,"publicKeys/"+key),{
+expiresAt:newExpire
+});
 
 loadKeys();
-
 }
 
-/* DELETE KEY */
-
+/* DELETE */
 async function deleteKey(key){
 
-const confirmDelete =
-confirm(
-"¿Eliminar esta key?"
-);
+if(!confirm("Eliminar key?")) return;
 
-if(!confirmDelete) return;
-
-await set(
-
-ref(
-db,
-"users/" +
-currentUID +
-"/keys/" +
-key
-),
-
-null
-
-);
+await set(ref(db,"users/"+currentUID+"/keys/"+key),null);
+await set(ref(db,"publicKeys/"+key),null);
 
 loadKeys();
-
-loadStats();
-
 }
 
 /* LOAD KEYS */
-
 async function loadKeys(){
 
-const list =
-document.getElementById(
-"keysList"
-);
+keysList.innerHTML="";
 
-list.innerHTML = "";
+const snap = await get(child(ref(db),"users/"+currentUID+"/keys"));
 
-const snapshot =
-await get(
+if(!snap.exists()) return;
 
-child(
-ref(db),
-"users/" +
-currentUID +
-"/keys"
-)
+Object.values(snap.val()).reverse().forEach(k=>{
 
-);
+const div = document.createElement("div");
+div.className="key-item";
 
-if(snapshot.exists()){
-
-const data =
-snapshot.val();
-
-Object.values(data)
-.reverse()
-.forEach(k=>{
-
-const div =
-document.createElement(
-"div"
-);
-
-div.className =
-"key-item";
-
-if(k.shared){
-
-div.classList.add(
-"shared"
-);
-
-}
-
-const exp =
-new Date(
-k.expiresAt
-);
-
-div.innerHTML = `
-
+div.innerHTML=`
 <b>${k.key}</b>
-
-<div class="small">
-⏳ ${exp.toLocaleString()}
-</div>
-
-<div class="small">
-📱 ${k.usedBy || "Sin usar"}
-</div>
-
-<div class="small">
-
-${
-k.shared
-? "🚫 Compartida"
-: k.used
-? "🔒 En uso"
-: "🟢 Disponible"
-}
-
-</div>
-
-<div class="small">
-
-Estado:
-${
-k.active
-? "🟢 Activa"
-: "❌ Desactivada"
-}
-
-</div>
+<div>Expira: ${new Date(k.expiresAt).toLocaleString()}</div>
+<div>Uso: ${k.usedBy||"Libre"}</div>
+<div>Estado: ${k.active?"Activa":"Desactivada"}</div>
 
 <div class="actions">
-
-<button
-onclick="toggleKey('${k.key}', ${k.active})">
-
-${
-k.active
-? "❌ Desactivar"
-: "✅ Activar"
-}
-
-</button>
-
-<button
-onclick="addTime('${k.key}', 1)">
-+1 Día
-</button>
-
-<button
-onclick="addTime('${k.key}', 3)">
-+3 Días
-</button>
-
-<button
-onclick="addTime('${k.key}', 7)">
-+7 Días
-</button>
-
-<button
-onclick="resetDevice('${k.key}')">
-🔄 Reset Device
-</button>
-
-<button
-onclick="deleteKey('${k.key}')">
-🗑️ Eliminar
-</button>
-
+<button onclick="toggleKey('${k.key}',${k.active})">Toggle</button>
+<button onclick="addTime('${k.key}',1)">+1d</button>
+<button onclick="addTime('${k.key}',3)">+3d</button>
+<button onclick="resetDevice('${k.key}')">Reset</button>
+<button onclick="deleteKey('${k.key}')">Eliminar</button>
 </div>
-
 `;
 
-list.appendChild(div);
+keysList.appendChild(div);
 
 });
-
 }
 
-}
+/* RESET */
+async function resetDevice(key){
 
-/* STATS */
-
-async function loadStats(){
-
-let total = 0;
-let shared = 0;
-
-const snapshot =
-await get(
-child(
-ref(db),
-"users/" +
-currentUID +
-"/keys"
-)
-);
-
-if(snapshot.exists()){
-
-const data =
-snapshot.val();
-
-Object.values(data)
-.forEach(k=>{
-
-total++;
-
-if(k.shared){
-
-shared++;
-
-}
-
+await update(ref(db,"users/"+currentUID+"/keys/"+key),{
+used:false,usedBy:"",shared:false
 });
 
-}
-
-document.getElementById(
-"totalKeys"
-).innerHTML =
-total;
-
-document.getElementById(
-"sharedKeys"
-).innerHTML =
-shared;
-
-const onlineSnap =
-await get(
-child(ref(db),
-"onlineUsers")
-);
-
-if(onlineSnap.exists()){
-
-document.getElementById(
-"onlineUsers"
-).innerHTML =
-
-Object.keys(
-onlineSnap.val()
-).length;
-
-}
-
-}
-
-/* LOAD LOGS */
-
-async function loadLogs(){
-
-const logs =
-document.getElementById(
-"logs"
-);
-
-logs.innerHTML = "";
-
-const snapshot =
-await get(
-child(ref(db),
-"logs")
-);
-
-if(snapshot.exists()){
-
-const data =
-snapshot.val();
-
-Object.values(data)
-.reverse()
-.forEach(log=>{
-
-const div =
-document.createElement(
-"div"
-);
-
-div.className =
-"key-item";
-
-div.innerHTML = `
-
-📱 ${log.device}
-
-<div class="small">
-🔑 ${log.key}
-</div>
-
-`;
-
-logs.appendChild(div);
-
+await update(ref(db,"publicKeys/"+key),{
+used:false,usedBy:""
 });
 
+loadKeys();
 }
 
-}
-
-/* BAN DEVICE */
-
-async function banDevice(){
-
-const device =
-document.getElementById(
-"banDevice"
-).value;
-
-await set(
-
-ref(
-db,
-"bannedDevices/" +
-device
-),
-
-true
-
-);
-
-alert(
-"🚫 Dispositivo baneado"
-);
-
-}
-
-/* BUTTONS */
-
-window.onload = () => {
-
-document
-.getElementById(
-"loginBtn"
-)
-.addEventListener(
-"click",
-login
-);
-
-document
-.getElementById(
-"logoutBtn"
-)
-.addEventListener(
-"click",
-logout
-);
-
-document
-.getElementById(
-"createKeyBtn"
-)
-.addEventListener(
-"click",
-createKey
-);
-
-document
-.getElementById(
-"banBtn"
-)
-.addEventListener(
-"click",
-banDevice
-);
-
-};
+/* EVENTS */
+loginBtn.onclick=login;
+logoutBtn.onclick=logout;
+createKeyBtn.onclick=createKey;
 
 /* GLOBAL */
-
-window.toggleKey =
-toggleKey;
-
-window.addTime =
-addTime;
-
-window.resetDevice =
-resetDevice;
-
-window.deleteKey =
-deleteKey;
+window.toggleKey=toggleKey;
+window.addTime=addTime;
+window.deleteKey=deleteKey;
+window.resetDevice=resetDevice;
 
 </script>
 
