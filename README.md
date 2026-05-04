@@ -2,15 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin PRO</title>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:Arial}
 .container{padding:20px}
-.card{background:#111;padding:15px;border-radius:10px;margin-bottom:10px}
-button{margin:5px;padding:6px 10px;border:none;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer}
-input{padding:8px;margin:5px;background:#222;border:none;color:#fff;border-radius:6px}
+.card{background:#111;padding:10px;border-radius:8px;margin:5px}
+button{margin:3px;padding:6px;border:none;border-radius:6px;background:#3b82f6;color:white}
+select,input{padding:6px;background:#222;color:#fff;border:none;border-radius:6px}
 .hidden{display:none}
 </style>
 </head>
@@ -27,19 +26,28 @@ input{padding:8px;margin:5px;background:#222;border:none;color:#fff;border-radiu
 
 <div id="panel" class="container hidden">
 
-<h2>Panel Admin</h2>
-
 <button id="logoutBtn">Cerrar sesión</button>
 
 <h3>Crear Key</h3>
-<input id="days" type="number" placeholder="Días">
-<button id="createKey">Crear</button>
+
+<select id="timeSelect">
+<option value="1">1 día</option>
+<option value="2">2 días</option>
+<option value="3">3 días</option>
+<option value="4">4 días</option>
+<option value="5">5 días</option>
+<option value="6">6 días</option>
+<option value="7">7 días</option>
+<option value="30">1 mes</option>
+<option value="365">1 año</option>
+</select>
+
+<button id="createKey">Generar</button>
+
+<p id="createStatus"></p>
 
 <h3>Keys</h3>
 <div id="keys"></div>
-
-<h3>Online Users</h3>
-<div id="online"></div>
 
 </div>
 
@@ -70,14 +78,13 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 const email = document.getElementById("email");
 const password = document.getElementById("password");
-
 const loginStatus = document.getElementById("loginStatus");
 
 const keysDiv = document.getElementById("keys");
-const onlineDiv = document.getElementById("online");
 
 const createKeyBtn = document.getElementById("createKey");
-const daysInput = document.getElementById("days");
+const timeSelect = document.getElementById("timeSelect");
+const createStatus = document.getElementById("createStatus");
 
 /* LOGIN */
 loginBtn.onclick = async ()=>{
@@ -88,9 +95,7 @@ loginStatus.innerText=e.message;
 }
 };
 
-logoutBtn.onclick = async ()=>{
-await signOut(auth);
-};
+logoutBtn.onclick = ()=>signOut(auth);
 
 /* SESSION */
 onAuthStateChanged(auth,user=>{
@@ -98,29 +103,37 @@ if(user){
 loginDiv.classList.add("hidden");
 panel.classList.remove("hidden");
 loadKeys();
-loadOnline();
 }else{
 loginDiv.classList.remove("hidden");
 panel.classList.add("hidden");
 }
 });
 
-/* GENERAR KEY */
+/* GENERAR KEY REAL */
 function genKey(){
-return Math.random().toString(36).substring(2,6).toUpperCase()+"-"+
-Math.random().toString(36).substring(2,6).toUpperCase()+"-"+
-Math.random().toString(36).substring(2,6).toUpperCase();
+const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+let k="";
+for(let i=0;i<16;i++){
+k+=chars[Math.floor(Math.random()*chars.length)];
+if((i+1)%4===0 && i!==15) k+="-";
+}
+return k;
 }
 
-/* CREAR KEY */
-createKeyBtn.onclick = ()=>{
-let days=parseInt(daysInput.value)||1;
-let key=genKey();
+/* CREAR KEY (FIX) */
+createKeyBtn.onclick = async ()=>{
 
-let now=Date.now();
-let exp=now+(days*86400000);
+let days = parseInt(timeSelect.value);
+if(!days){
+createStatus.innerText="Selecciona tiempo";
+return;
+}
 
-set(ref(db,"publicKeys/"+key),{
+let key = genKey();
+let now = Date.now();
+let exp = now + (days * 86400000);
+
+await set(ref(db,"publicKeys/"+key),{
 key,
 createdAt:now,
 expiresAt:exp,
@@ -130,6 +143,8 @@ used:false,
 usedBy:"",
 shared:false
 });
+
+createStatus.innerText="✔ Key creada: "+key;
 };
 
 /* LISTAR KEYS */
@@ -144,8 +159,7 @@ div.className="card";
 
 div.innerHTML=`
 <b>${k.key}</b><br>
-Activa: ${k.active}<br>
-Usada: ${k.used}<br>
+Activa: ${k.active} | Usada: ${k.used}<br>
 
 <button onclick="toggle('${k.key}',${k.active})">ON/OFF</button>
 <button onclick="del('${k.key}')">Eliminar</button>
@@ -159,37 +173,21 @@ keysDiv.appendChild(div);
 });
 }
 
-/* FUNCIONES GLOBAL */
-window.del = (key)=>{
-remove(ref(db,"publicKeys/"+key));
-};
+/* FUNCIONES */
+window.del = key => remove(ref(db,"publicKeys/"+key));
 
 window.toggle = (key,state)=>{
 update(ref(db,"publicKeys/"+key),{active:!state});
 };
 
-window.add = async (key,d)=>{
-let r=ref(db,"publicKeys/"+key);
-onValue(r,s=>{
+window.add = (key,d)=>{
+onValue(ref(db,"publicKeys/"+key),s=>{
 let v=s.val();
-let newExp=v.expiresAt+(d*86400000);
-update(r,{expiresAt:newExp});
+update(ref(db,"publicKeys/"+key),{
+expiresAt: v.expiresAt + (d*86400000)
+});
 },{onlyOnce:true});
 };
-
-/* ONLINE USERS */
-function loadOnline(){
-onValue(ref(db,"onlineUsers"),snap=>{
-onlineDiv.innerHTML="";
-snap.forEach(c=>{
-let d=c.val();
-let div=document.createElement("div");
-div.className="card";
-div.innerHTML=`${c.key} → ${d.key}`;
-onlineDiv.appendChild(div);
-});
-});
-}
 </script>
 
 </body>
