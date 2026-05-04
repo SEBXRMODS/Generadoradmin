@@ -13,7 +13,7 @@ color:white;
 overflow:hidden;
 }
 
-/* FONDO */
+/* PARTICULAS */
 #particles{
 position:fixed;
 top:0;
@@ -101,22 +101,22 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, get, update, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* 🔥 CONFIG */
+/* 🔥 CONFIG REAL CORREGIDA */
 const firebaseConfig = {
-apiKey: "TU_API_KEY",
-authDomain: "TU_AUTH",
-databaseURL: "TU_DB",
-projectId: "TU_ID",
-storageBucket: "TU_BUCKET",
-messagingSenderId: "TU_MSG",
-appId: "TU_APP"
+apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
+authDomain: "panelsebxrmods.firebaseapp.com",
+databaseURL: "https://panelsebxrmods-default-rtdb.firebaseio.com",
+projectId: "panelsebxrmods",
+storageBucket: "panelsebxrmods.appspot.com",
+messagingSenderId: "717339227525",
+appId: "1:717339227525:web:98101a11654e25a45800ec"
 };
 
 const appFirebase = initializeApp(firebaseConfig);
 const auth = getAuth(appFirebase);
 const db = getDatabase(appFirebase);
 
-/* 🔥 ELEMENTOS */
+/* ELEMENTOS */
 const authDiv = document.getElementById("auth");
 const keyLoginDiv = document.getElementById("keyLogin");
 const appDiv = document.getElementById("app");
@@ -286,7 +286,7 @@ validateKey(savedKey);
 
 </script>
 
-<!-- 🔥 PARTICULAS -->
+<!-- PARTICULAS PRO -->
 <script>
 const canvas=document.getElementById("particles");
 const ctx=canvas.getContext("2d");
