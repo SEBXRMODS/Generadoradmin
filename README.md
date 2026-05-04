@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App Pro</title>
+<title>App</title>
 
 <style>
 body{
@@ -68,23 +68,13 @@ cursor:pointer;
 
 <canvas id="particles"></canvas>
 
-<!-- LOGIN FIREBASE -->
-<div id="auth" class="center">
+<!-- LOGIN -->
+<div id="login" class="center">
 <div class="box">
 <h2>Login</h2>
 <input id="email" placeholder="Correo">
 <input id="password" type="password" placeholder="Contraseña">
-<button id="loginAuthBtn">Entrar</button>
-<p id="authStatus"></p>
-</div>
-</div>
-
-<!-- LOGIN KEY -->
-<div id="keyLogin" class="center" style="display:none">
-<div class="box">
-<h2>Ingresar Key</h2>
-<input id="keyInput" placeholder="Key">
-<button id="loginKeyBtn">Validar</button>
+<button id="loginBtn">Entrar</button>
 <p id="status"></p>
 </div>
 </div>
@@ -99,13 +89,11 @@ cursor:pointer;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get, update, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* 🔥 CONFIG REAL CORREGIDA */
+/* CONFIG */
 const firebaseConfig = {
 apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
 authDomain: "panelsebxrmods.firebaseapp.com",
-databaseURL: "https://panelsebxrmods-default-rtdb.firebaseio.com",
 projectId: "panelsebxrmods",
 storageBucket: "panelsebxrmods.appspot.com",
 messagingSenderId: "717339227525",
@@ -114,174 +102,47 @@ appId: "1:717339227525:web:98101a11654e25a45800ec"
 
 const appFirebase = initializeApp(firebaseConfig);
 const auth = getAuth(appFirebase);
-const db = getDatabase(appFirebase);
 
 /* ELEMENTOS */
-const authDiv = document.getElementById("auth");
-const keyLoginDiv = document.getElementById("keyLogin");
+const loginDiv = document.getElementById("login");
 const appDiv = document.getElementById("app");
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
-const loginAuthBtn = document.getElementById("loginAuthBtn");
-const loginKeyBtn = document.getElementById("loginKeyBtn");
+const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
-
 const status = document.getElementById("status");
-const authStatus = document.getElementById("authStatus");
 
-/* DEVICE */
-if(!localStorage.getItem("deviceId")){
-localStorage.setItem("deviceId","DEV-"+Math.random().toString(36).substring(2,10));
-}
-const device = localStorage.getItem("deviceId");
+/* LOGIN */
+loginBtn.onclick = async ()=>{
+status.innerText="Entrando...";
 
-let unsubscribe = null;
-
-/* LOGIN FIREBASE */
-loginAuthBtn.onclick = async ()=>{
 try{
-await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+await signInWithEmailAndPassword(
+auth,
+emailInput.value,
+passwordInput.value
+);
 }catch(e){
-authStatus.innerText = e.message;
+status.innerText = e.message;
 }
 };
 
-/* DETECTAR SESION */
+/* SESIÓN */
 onAuthStateChanged(auth, user=>{
 if(user){
-authDiv.style.display="none";
-keyLoginDiv.style.display="flex";
+loginDiv.style.display="none";
+appDiv.style.display="flex";
 }else{
-authDiv.style.display="flex";
-keyLoginDiv.style.display="none";
+loginDiv.style.display="flex";
 appDiv.style.display="none";
 }
 });
 
-/* VALIDAR KEY */
-async function validateKey(){
-
-const key = document.getElementById("keyInput").value;
-
-status.innerText="Verificando...";
-
-try{
-
-const snap = await get(ref(db,"publicKeys/"+key));
-
-if(!snap.exists()){
-status.innerText="❌ Key inválida";
-return;
-}
-
-const data = snap.val();
-
-if(!data.active){
-status.innerText="❌ Desactivada";
-return;
-}
-
-if(Date.now()>data.expiresAt){
-status.innerText="⏳ Expirada";
-return;
-}
-
-if(data.used && data.usedBy !== device){
-await update(ref(db,"publicKeys/"+key),{shared:true});
-status.innerText="🚫 Compartida";
-return;
-}
-
-/* marcar uso */
-await update(ref(db,"publicKeys/"+key),{
-used:true,
-usedBy:device
-});
-
-/* log */
-await set(ref(db,"logs/"+Date.now()),{
-key,device,time:Date.now()
-});
-
-/* guardar */
-localStorage.setItem("savedKey",key);
-
-/* tiempo real */
-listenKey(key);
-
-/* entrar */
-enterApp();
-
-}catch(e){
-console.error(e);
-status.innerText="Error conexión";
-}
-
-}
-
-/* TIEMPO REAL */
-function listenKey(key){
-
-const keyRef = ref(db,"publicKeys/"+key);
-
-unsubscribe = onValue(keyRef,(snap)=>{
-
-if(!snap.exists()){
-forceLogout("Key eliminada");
-return;
-}
-
-const data = snap.val();
-
-if(!data.active){
-forceLogout("Key desactivada");
-return;
-}
-
-if(Date.now()>data.expiresAt){
-forceLogout("Expirada");
-return;
-}
-
-if(data.used && data.usedBy !== device){
-forceLogout("Uso en otro dispositivo");
-return;
-}
-
-});
-}
-
-/* EXPULSAR */
-function forceLogout(msg){
-alert(msg);
-localStorage.removeItem("savedKey");
-if(unsubscribe) unsubscribe();
-location.reload();
-}
-
-/* ENTRAR */
-function enterApp(){
-keyLoginDiv.style.display="none";
-appDiv.style.display="flex";
-}
-
 /* LOGOUT */
 logoutBtn.onclick = async ()=>{
-localStorage.removeItem("savedKey");
 await signOut(auth);
 location.reload();
-};
-
-/* EVENTO */
-loginKeyBtn.onclick = validateKey;
-
-/* AUTO LOGIN KEY */
-window.onload = ()=>{
-const savedKey = localStorage.getItem("savedKey");
-if(savedKey){
-validateKey(savedKey);
-}
 };
 
 </script>
