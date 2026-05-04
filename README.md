@@ -3,54 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App PRO</title>
+<title>Admin PRO</title>
 
 <style>
-body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
-.center{height:100vh;display:flex;justify-content:center;align-items:center;flex-direction:column}
-.box{background:#111;padding:25px;border-radius:10px;width:300px;text-align:center}
-input{width:100%;padding:10px;margin-top:10px;background:#222;border:none;border-radius:6px;color:white}
-button{width:100%;padding:10px;margin-top:10px;border:none;border-radius:6px;background:#3b82f6;color:white}
-#particles{position:fixed;width:100%;height:100%;z-index:-1}
+body{margin:0;background:#000;color:#fff;font-family:Arial}
+.container{padding:20px}
+.card{background:#111;padding:15px;border-radius:10px;margin-bottom:10px}
+button{margin:5px;padding:6px 10px;border:none;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer}
+input{padding:8px;margin:5px;background:#222;border:none;color:#fff;border-radius:6px}
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<canvas id="particles"></canvas>
-
-<!-- LOGIN -->
-<div id="login" class="center">
-<div class="box">
-<h2>Login</h2>
-<input id="email" type="email" placeholder="Correo">
+<div id="login" class="container">
+<h2>Admin Login</h2>
+<input id="email" placeholder="Correo">
 <input id="password" type="password" placeholder="Contraseña">
 <button id="loginBtn">Entrar</button>
 <p id="loginStatus"></p>
 </div>
-</div>
 
-<!-- KEY -->
-<div id="keyScreen" class="center" style="display:none">
-<div class="box">
-<h2>Key</h2>
-<input id="keyInput" placeholder="XXXX-XXXX">
-<button id="keyBtn">Validar</button>
-<p id="keyStatus"></p>
-</div>
-</div>
+<div id="panel" class="container hidden">
 
-<!-- APP -->
-<div id="app" class="center" style="display:none">
-<h2>Acceso OK</h2>
-<p id="info"></p>
+<h2>Panel Admin</h2>
+
 <button id="logoutBtn">Cerrar sesión</button>
+
+<h3>Crear Key</h3>
+<input id="days" type="number" placeholder="Días">
+<button id="createKey">Crear</button>
+
+<h3>Keys</h3>
+<div id="keys"></div>
+
+<h3>Online Users</h3>
+<div id="online"></div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get, update, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
@@ -66,32 +62,25 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-/* DOM */
 const loginDiv = document.getElementById("login");
-const keyDiv = document.getElementById("keyScreen");
-const appDiv = document.getElementById("app");
+const panel = document.getElementById("panel");
+
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 
 const email = document.getElementById("email");
 const password = document.getElementById("password");
-const keyInput = document.getElementById("keyInput");
-
-const loginBtn = document.getElementById("loginBtn");
-const keyBtn = document.getElementById("keyBtn");
-const logoutBtn = document.getElementById("logoutBtn");
 
 const loginStatus = document.getElementById("loginStatus");
-const keyStatus = document.getElementById("keyStatus");
-const info = document.getElementById("info");
 
-/* DEVICE */
-let device = localStorage.getItem("deviceId") || "DEV-"+Math.random().toString(36).substring(2,10);
-localStorage.setItem("deviceId",device);
+const keysDiv = document.getElementById("keys");
+const onlineDiv = document.getElementById("online");
 
-let unsub=null;
+const createKeyBtn = document.getElementById("createKey");
+const daysInput = document.getElementById("days");
 
-/* LOGIN AUTH */
+/* LOGIN */
 loginBtn.onclick = async ()=>{
-loginStatus.innerText="Entrando...";
 try{
 await signInWithEmailAndPassword(auth,email.value,password.value);
 }catch(e){
@@ -99,125 +88,108 @@ loginStatus.innerText=e.message;
 }
 };
 
-/* SESION */
+logoutBtn.onclick = async ()=>{
+await signOut(auth);
+};
+
+/* SESSION */
 onAuthStateChanged(auth,user=>{
 if(user){
-loginDiv.style.display="none";
-keyDiv.style.display="flex";
-
-/* auto key */
-let saved = localStorage.getItem("savedKey");
-if(saved) validateKey(saved);
-
+loginDiv.classList.add("hidden");
+panel.classList.remove("hidden");
+loadKeys();
+loadOnline();
 }else{
-loginDiv.style.display="flex";
-keyDiv.style.display="none";
-appDiv.style.display="none";
+loginDiv.classList.remove("hidden");
+panel.classList.add("hidden");
 }
 });
 
-/* VALIDAR KEY */
-async function validateKey(k=null){
-
-let key=(k||keyInput.value).toUpperCase();
-keyStatus.innerText="Verificando...";
-
-let snap=await get(ref(db,"publicKeys/"+key));
-
-if(!snap.exists()){keyStatus.innerText="❌ invalida";return;}
-let d=snap.val();
-
-if(!d.active){keyStatus.innerText="❌ desactivada";return;}
-if(Date.now()>d.expiresAt){keyStatus.innerText="⏳ expirada";return;}
-
-/* anti-share */
-if(d.used && d.usedBy!==device){
-await update(ref(db,"publicKeys/"+key),{shared:true});
-keyStatus.innerText="🚫 compartida";return;
+/* GENERAR KEY */
+function genKey(){
+return Math.random().toString(36).substring(2,6).toUpperCase()+"-"+
+Math.random().toString(36).substring(2,6).toUpperCase()+"-"+
+Math.random().toString(36).substring(2,6).toUpperCase();
 }
 
-/* guardar uso */
-await update(ref(db,"publicKeys/"+key),{
-used:true,
-usedBy:device
+/* CREAR KEY */
+createKeyBtn.onclick = ()=>{
+let days=parseInt(daysInput.value)||1;
+let key=genKey();
+
+let now=Date.now();
+let exp=now+(days*86400000);
+
+set(ref(db,"publicKeys/"+key),{
+key,
+createdAt:now,
+expiresAt:exp,
+days,
+active:true,
+used:false,
+usedBy:"",
+shared:false
 });
-
-/* logs */
-await set(ref(db,"logs/"+Date.now()),{
-key,device,time:Date.now()
-});
-
-/* online */
-let o=ref(db,"onlineUsers/"+device);
-await set(o,{key,time:Date.now()});
-onDisconnect(o).remove();
-
-/* guardar local */
-localStorage.setItem("savedKey",key);
-
-/* realtime */
-listen(key);
-
-/* UI */
-keyDiv.style.display="none";
-appDiv.style.display="flex";
-info.innerText="Key: "+key;
-}
-
-/* TIEMPO REAL */
-function listen(key){
-if(unsub)unsub();
-
-unsub=onValue(ref(db,"publicKeys/"+key),(s)=>{
-if(!s.exists()) logout("Key eliminada");
-
-let d=s.val();
-
-if(!d.active) logout("Key desactivada");
-if(Date.now()>d.expiresAt) logout("Expirada");
-if(d.used && d.usedBy!==device) logout("Otro dispositivo");
-});
-}
-
-/* LOGOUT */
-function logout(msg){
-alert(msg);
-localStorage.clear();
-location.reload();
-}
-
-keyBtn.onclick=()=>validateKey();
-
-logoutBtn.onclick=async()=>{
-await signOut(auth);
-localStorage.clear();
-location.reload();
 };
-</script>
 
-<!-- PARTICULAS -->
-<script>
-let c=document.getElementById("particles"),x=c.getContext("2d");
-function r(){c.width=innerWidth;c.height=innerHeight}r();addEventListener("resize",r);
-let p=[...Array(100)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-0.5)*1.2,vy:(Math.random()-0.5)*1.2}));
-function d(){
-x.clearRect(0,0,c.width,c.height);
-p.forEach(a=>{
-a.x+=a.vx;a.y+=a.vy;
-if(a.x<0||a.x>c.width)a.vx*=-1;
-if(a.y<0||a.y>c.height)a.vy*=-1;
-x.fillRect(a.x,a.y,2,2);
-p.forEach(b=>{
-let dist=Math.hypot(a.x-b.x,a.y-b.y);
-if(dist<120){
-x.strokeStyle="rgba(255,255,255,"+(1-dist/120)+")";
-x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.stroke();
-}
+/* LISTAR KEYS */
+function loadKeys(){
+onValue(ref(db,"publicKeys"),snap=>{
+keysDiv.innerHTML="";
+snap.forEach(child=>{
+let k=child.val();
+
+let div=document.createElement("div");
+div.className="card";
+
+div.innerHTML=`
+<b>${k.key}</b><br>
+Activa: ${k.active}<br>
+Usada: ${k.used}<br>
+
+<button onclick="toggle('${k.key}',${k.active})">ON/OFF</button>
+<button onclick="del('${k.key}')">Eliminar</button>
+<button onclick="add('${k.key}',1)">+1d</button>
+<button onclick="add('${k.key}',3)">+3d</button>
+<button onclick="add('${k.key}',7)">+7d</button>
+`;
+
+keysDiv.appendChild(div);
 });
 });
-requestAnimationFrame(d);
 }
-d();
+
+/* FUNCIONES GLOBAL */
+window.del = (key)=>{
+remove(ref(db,"publicKeys/"+key));
+};
+
+window.toggle = (key,state)=>{
+update(ref(db,"publicKeys/"+key),{active:!state});
+};
+
+window.add = async (key,d)=>{
+let r=ref(db,"publicKeys/"+key);
+onValue(r,s=>{
+let v=s.val();
+let newExp=v.expiresAt+(d*86400000);
+update(r,{expiresAt:newExp});
+},{onlyOnce:true});
+};
+
+/* ONLINE USERS */
+function loadOnline(){
+onValue(ref(db,"onlineUsers"),snap=>{
+onlineDiv.innerHTML="";
+snap.forEach(c=>{
+let d=c.val();
+let div=document.createElement("div");
+div.className="card";
+div.innerHTML=`${c.key} → ${d.key}`;
+onlineDiv.appendChild(div);
+});
+});
+}
 </script>
 
 </body>
