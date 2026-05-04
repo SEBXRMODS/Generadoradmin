@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App</title>
+<title>App Pro</title>
 
 <style>
 body{
@@ -68,12 +68,23 @@ cursor:pointer;
 
 <canvas id="particles"></canvas>
 
-<!-- LOGIN -->
-<div id="login" class="center">
+<!-- LOGIN FIREBASE -->
+<div id="auth" class="center">
 <div class="box">
 <h2>Login</h2>
-<input id="keyInput" placeholder="Ingresa tu key">
-<button id="loginBtn">Entrar</button>
+<input id="email" placeholder="Correo">
+<input id="password" type="password" placeholder="Contraseña">
+<button id="loginAuthBtn">Entrar</button>
+<p id="authStatus"></p>
+</div>
+</div>
+
+<!-- LOGIN KEY -->
+<div id="keyLogin" class="center" style="display:none">
+<div class="box">
+<h2>Ingresar Key</h2>
+<input id="keyInput" placeholder="Key">
+<button id="loginKeyBtn">Validar</button>
 <p id="status"></p>
 </div>
 </div>
@@ -87,9 +98,10 @@ cursor:pointer;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, get, update, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* 🔥 CONFIG */
+/* CONFIG */
 const firebaseConfig = {
 apiKey: "TU_API_KEY",
 authDomain: "TU_AUTH",
@@ -101,6 +113,7 @@ appId: "TU_APP"
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getDatabase(app);
 
 /* DEVICE */
@@ -111,34 +124,41 @@ const device = localStorage.getItem("deviceId");
 
 let unsubscribe = null;
 
-/* AUTO LOGIN */
-window.onload = async ()=>{
-const savedKey = localStorage.getItem("savedKey");
-if(savedKey){
-validateKey(savedKey,true);
+/* LOGIN FIREBASE */
+loginAuthBtn.onclick = async ()=>{
+try{
+await signInWithEmailAndPassword(auth,email.value,password.value);
+}catch(e){
+authStatus.innerText = e.message;
 }
 };
 
-/* VALIDAR */
-async function validateKey(inputKey=null,auto=false){
+/* DETECTAR SESION */
+onAuthStateChanged(auth, user=>{
+if(user){
+auth.style.display="none";
+keyLogin.style.display="flex";
+}else{
+auth.style.display="flex";
+}
+});
 
-const key = inputKey || document.getElementById("keyInput").value;
+/* VALIDAR KEY */
+async function validateKey(){
+
+const key = keyInput.value;
 
 status.innerText="Verificando...";
-
-try{
 
 const snap = await get(ref(db,"publicKeys/"+key));
 
 if(!snap.exists()){
 status.innerText="❌ Key inválida";
-localStorage.removeItem("savedKey");
 return;
 }
 
 const data = snap.val();
 
-/* checks */
 if(!data.active){
 status.innerText="❌ Desactivada";
 return;
@@ -149,11 +169,8 @@ status.innerText="⏳ Expirada";
 return;
 }
 
-/* anti-share */
 if(data.used && data.usedBy !== device){
-
 await update(ref(db,"publicKeys/"+key),{shared:true});
-
 status.innerText="🚫 Compartida";
 return;
 }
@@ -172,80 +189,69 @@ key,device,time:Date.now()
 /* guardar */
 localStorage.setItem("savedKey",key);
 
-/* escuchar en tiempo real */
+/* tiempo real */
 listenKey(key);
 
 /* entrar */
 enterApp();
-
-}catch(e){
-console.error(e);
-status.innerText="Error conexión";
-}
-
 }
 
 /* TIEMPO REAL */
 function listenKey(key){
 
-const keyRef = ref(db,"publicKeys/"+key);
-
-unsubscribe = onValue(keyRef,(snap)=>{
+unsubscribe = onValue(ref(db,"publicKeys/"+key),(snap)=>{
 
 if(!snap.exists()){
-forceLogout("❌ Key eliminada");
+forceLogout("Key eliminada");
 return;
 }
 
 const data = snap.val();
 
 if(!data.active){
-forceLogout("🚫 Key desactivada");
+forceLogout("Key desactivada");
 return;
 }
 
 if(Date.now()>data.expiresAt){
-forceLogout("⏳ Expirada");
+forceLogout("Expirada");
 return;
 }
 
 if(data.used && data.usedBy !== device){
-forceLogout("🚫 Uso en otro dispositivo");
+forceLogout("Uso en otro dispositivo");
 return;
 }
 
 });
 }
 
-/* EXPULSAR */
+/* LOGOUT FORZADO */
 function forceLogout(msg){
-
 alert(msg);
-
 localStorage.removeItem("savedKey");
-
-if(unsubscribe) unsubscribe();
-
 location.reload();
 }
 
 /* ENTRAR */
 function enterApp(){
-document.getElementById("login").style.display="none";
-document.getElementById("app").style.display="flex";
+keyLogin.style.display="none";
+app.style.display="flex";
 }
 
-/* EVENTOS */
-loginBtn.onclick=()=>validateKey();
-
-logoutBtn.onclick=()=>{
+/* LOGOUT */
+logoutBtn.onclick = async ()=>{
 localStorage.removeItem("savedKey");
+await signOut(auth);
 location.reload();
 };
 
+/* EVENTO */
+loginKeyBtn.onclick = validateKey;
+
 </script>
 
-<!-- 🔥 PARTICULAS PRO -->
+<!-- PARTICULAS -->
 <script>
 const canvas=document.getElementById("particles");
 const ctx=canvas.getContext("2d");
@@ -271,11 +277,9 @@ size:Math.random()*2+1
 }
 
 function draw(){
-
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
 particles.forEach((p,i)=>{
-
 p.x+=p.vx;
 p.y+=p.vy;
 
@@ -289,7 +293,6 @@ ctx.fill();
 
 for(let j=i+1;j<particles.length;j++){
 const p2=particles[j];
-
 const dx=p.x-p2.x;
 const dy=p.y-p2.y;
 const dist=Math.sqrt(dx*dx+dy*dy);
@@ -302,7 +305,6 @@ ctx.strokeStyle=`rgba(255,255,255,${1-dist/120})`;
 ctx.stroke();
 }
 }
-
 });
 
 requestAnimationFrame(draw);
