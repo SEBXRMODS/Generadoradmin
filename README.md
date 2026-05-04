@@ -13,7 +13,7 @@ color:white;
 overflow:hidden;
 }
 
-/* PARTICULAS */
+/* FONDO */
 #particles{
 position:fixed;
 top:0;
@@ -101,7 +101,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, get, update, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* CONFIG */
+/* 🔥 CONFIG */
 const firebaseConfig = {
 apiKey: "TU_API_KEY",
 authDomain: "TU_AUTH",
@@ -112,9 +112,23 @@ messagingSenderId: "TU_MSG",
 appId: "TU_APP"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+const appFirebase = initializeApp(firebaseConfig);
+const auth = getAuth(appFirebase);
+const db = getDatabase(appFirebase);
+
+/* 🔥 ELEMENTOS */
+const authDiv = document.getElementById("auth");
+const keyLoginDiv = document.getElementById("keyLogin");
+const appDiv = document.getElementById("app");
+
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const loginAuthBtn = document.getElementById("loginAuthBtn");
+const loginKeyBtn = document.getElementById("loginKeyBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const status = document.getElementById("status");
+const authStatus = document.getElementById("authStatus");
 
 /* DEVICE */
 if(!localStorage.getItem("deviceId")){
@@ -127,7 +141,7 @@ let unsubscribe = null;
 /* LOGIN FIREBASE */
 loginAuthBtn.onclick = async ()=>{
 try{
-await signInWithEmailAndPassword(auth,email.value,password.value);
+await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
 }catch(e){
 authStatus.innerText = e.message;
 }
@@ -136,19 +150,23 @@ authStatus.innerText = e.message;
 /* DETECTAR SESION */
 onAuthStateChanged(auth, user=>{
 if(user){
-auth.style.display="none";
-keyLogin.style.display="flex";
+authDiv.style.display="none";
+keyLoginDiv.style.display="flex";
 }else{
-auth.style.display="flex";
+authDiv.style.display="flex";
+keyLoginDiv.style.display="none";
+appDiv.style.display="none";
 }
 });
 
 /* VALIDAR KEY */
 async function validateKey(){
 
-const key = keyInput.value;
+const key = document.getElementById("keyInput").value;
 
 status.innerText="Verificando...";
+
+try{
 
 const snap = await get(ref(db,"publicKeys/"+key));
 
@@ -194,12 +212,20 @@ listenKey(key);
 
 /* entrar */
 enterApp();
+
+}catch(e){
+console.error(e);
+status.innerText="Error conexión";
+}
+
 }
 
 /* TIEMPO REAL */
 function listenKey(key){
 
-unsubscribe = onValue(ref(db,"publicKeys/"+key),(snap)=>{
+const keyRef = ref(db,"publicKeys/"+key);
+
+unsubscribe = onValue(keyRef,(snap)=>{
 
 if(!snap.exists()){
 forceLogout("Key eliminada");
@@ -226,17 +252,18 @@ return;
 });
 }
 
-/* LOGOUT FORZADO */
+/* EXPULSAR */
 function forceLogout(msg){
 alert(msg);
 localStorage.removeItem("savedKey");
+if(unsubscribe) unsubscribe();
 location.reload();
 }
 
 /* ENTRAR */
 function enterApp(){
-keyLogin.style.display="none";
-app.style.display="flex";
+keyLoginDiv.style.display="none";
+appDiv.style.display="flex";
 }
 
 /* LOGOUT */
@@ -249,9 +276,17 @@ location.reload();
 /* EVENTO */
 loginKeyBtn.onclick = validateKey;
 
+/* AUTO LOGIN KEY */
+window.onload = ()=>{
+const savedKey = localStorage.getItem("savedKey");
+if(savedKey){
+validateKey(savedKey);
+}
+};
+
 </script>
 
-<!-- PARTICULAS -->
+<!-- 🔥 PARTICULAS -->
 <script>
 const canvas=document.getElementById("particles");
 const ctx=canvas.getContext("2d");
