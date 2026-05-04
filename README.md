@@ -181,7 +181,7 @@ Cerrar sesión
 
 </div>
 
-<!-- GENERAR KEY -->
+<!-- GENERAR -->
 
 <div class="card">
 
@@ -422,7 +422,7 @@ loadLogs();
 
 });
 
-/* GENERAR KEY */
+/* GENERATE KEY */
 
 function generateKey(){
 
@@ -455,7 +455,7 @@ return result;
 
 }
 
-/* CREAR KEY */
+/* CREATE KEY */
 
 async function createKey(){
 
@@ -512,7 +512,7 @@ loadStats();
 
 }
 
-/* ACTIVAR / DESACTIVAR */
+/* TOGGLE KEY */
 
 async function toggleKey(key, active){
 
@@ -536,7 +536,7 @@ loadKeys();
 
 }
 
-/* AÑADIR TIEMPO */
+/* ADD TIME */
 
 async function addTime(key, days){
 
@@ -600,6 +600,37 @@ shared:false
 );
 
 loadKeys();
+
+}
+
+/* DELETE KEY */
+
+async function deleteKey(key){
+
+const confirmDelete =
+confirm(
+"¿Eliminar esta key?"
+);
+
+if(!confirmDelete) return;
+
+await set(
+
+ref(
+db,
+"users/" +
+currentUID +
+"/keys/" +
+key
+),
+
+null
+
+);
+
+loadKeys();
+
+loadStats();
 
 }
 
@@ -724,6 +755,11 @@ onclick="resetDevice('${k.key}')">
 🔄 Reset Device
 </button>
 
+<button
+onclick="deleteKey('${k.key}')">
+🗑️ Eliminar
+</button>
+
 </div>
 
 `;
@@ -803,7 +839,7 @@ onlineSnap.val()
 
 }
 
-/* LOGS */
+/* LOAD LOGS */
 
 async function loadLogs(){
 
@@ -934,6 +970,9 @@ addTime;
 
 window.resetDevice =
 resetDevice;
+
+window.deleteKey =
+deleteKey;
 
 </script>
 
