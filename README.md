@@ -1,193 +1,454 @@
-<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Admin PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin Keys</title>
 
 <style>
-body{margin:0;background:#000;color:#fff;font-family:Arial}
-.container{padding:20px}
-.card{background:#111;padding:10px;border-radius:8px;margin:5px}
-button{margin:3px;padding:6px;border:none;border-radius:6px;background:#3b82f6;color:white}
-select,input{padding:6px;background:#222;color:#fff;border:none;border-radius:6px}
-.hidden{display:none}
+
+body{
+background:#0a0a0a;
+color:white;
+font-family:Arial;
+padding:20px;
+margin:0;
+}
+
+h1{
+text-align:center;
+margin-bottom:30px;
+}
+
+.key{
+background:#111;
+border:1px solid #333;
+padding:20px;
+border-radius:15px;
+margin-bottom:20px;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:10px;
+background:#00ff88;
+color:black;
+font-weight:bold;
+cursor:pointer;
+margin:5px;
+}
+
+.danger{
+background:red;
+color:white;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-bottom:15px;
+background:#111;
+border:1px solid #444;
+color:white;
+border-radius:10px;
+}
+
+#panel{
+display:none;
+}
+
 </style>
 </head>
-
 <body>
 
-<div id="login" class="container">
-<h2>Admin Login</h2>
-<input id="email" placeholder="Correo">
-<input id="password" type="password" placeholder="Contraseña">
-<button id="loginBtn">Entrar</button>
-<p id="loginStatus"></p>
+<div id="loginBox">
+
+<h1>ADMIN LOGIN</h1>
+
+<input type="email" id="email" placeholder="Correo admin">
+
+<input type="password" id="password" placeholder="Contraseña">
+
+<button onclick="login()">
+Entrar
+</button>
+
+<p id="error"></p>
+
 </div>
 
-<div id="panel" class="container hidden">
+<div id="panel">
 
-<button id="logoutBtn">Cerrar sesión</button>
+<h1>PANEL ADMIN KEYS</h1>
 
-<h3>Crear Key</h3>
+<input
+type="text"
+id="buscar"
+placeholder="Buscar key o email..."
+oninput="filtrarKeys()">
 
-<select id="timeSelect">
-<option value="1">1 día</option>
-<option value="2">2 días</option>
-<option value="3">3 días</option>
-<option value="4">4 días</option>
-<option value="5">5 días</option>
-<option value="6">6 días</option>
-<option value="7">7 días</option>
-<option value="30">1 mes</option>
-<option value="365">1 año</option>
-</select>
-
-<button id="createKey">Generar</button>
-
-<p id="createStatus"></p>
-
-<h3>Keys</h3>
-<div id="keys"></div>
+<div id="keysContainer"></div>
 
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+getFirestore,
+collection,
+getDocs,
+doc,
+updateDoc,
+deleteDoc,
+getDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// FIREBASE
 
 const firebaseConfig = {
-apiKey: "AIzaSyBs3WgavHMxywN7GMr6Lp6CSmU_NRZOSYU",
-authDomain: "panelsebxrmods.firebaseapp.com",
-databaseURL: "https://panelsebxrmods-default-rtdb.firebaseio.com",
-projectId: "panelsebxrmods",
-storageBucket: "panelsebxrmods.appspot.com",
-messagingSenderId: "717339227525",
-appId: "1:717339227525:web:98101a11654e25a45800ec"
+
+apiKey: "AIzaSyBtbovWtH-fnSA2KqbobIFjtbNtcicsi-k",
+
+authDomain:
+"pagina-de-productos-680db.firebaseapp.com",
+
+projectId:
+"pagina-de-productos-680db",
+
+storageBucket:
+"pagina-de-productos-680db.firebasestorage.app",
+
+messagingSenderId:
+"393545047716",
+
+appId:
+"1:393545047716:web:07fb512bc7ee970bdbd031",
+
+measurementId:
+"G-EZBWVZDK5E"
+
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+const app =
+initializeApp(firebaseConfig);
 
-const loginDiv = document.getElementById("login");
-const panel = document.getElementById("panel");
+const auth =
+getAuth(app);
 
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
+const db =
+getFirestore(app);
 
-const email = document.getElementById("email");
-const password = document.getElementById("password");
-const loginStatus = document.getElementById("loginStatus");
+const container =
+document.getElementById(
+"keysContainer"
+);
 
-const keysDiv = document.getElementById("keys");
+let todasLasKeys = [];
 
-const createKeyBtn = document.getElementById("createKey");
-const timeSelect = document.getElementById("timeSelect");
-const createStatus = document.getElementById("createStatus");
+// UID ADMIN
 
-/* LOGIN */
-loginBtn.onclick = async ()=>{
+const admins = [
+
+"PEGA_AQUI_TU_UID"
+
+];
+
+// LOGIN
+
+window.login = async function(){
+
+const email =
+document.getElementById(
+"email"
+).value;
+
+const password =
+document.getElementById(
+"password"
+).value;
+
 try{
-await signInWithEmailAndPassword(auth,email.value,password.value);
-}catch(e){
-loginStatus.innerText=e.message;
-}
-};
 
-logoutBtn.onclick = ()=>signOut(auth);
+await signInWithEmailAndPassword(
+auth,
+email,
+password
+);
 
-/* SESSION */
-onAuthStateChanged(auth,user=>{
-if(user){
-loginDiv.classList.add("hidden");
-panel.classList.remove("hidden");
-loadKeys();
-}else{
-loginDiv.classList.remove("hidden");
-panel.classList.add("hidden");
-}
-});
+}catch(err){
 
-/* GENERAR KEY REAL */
-function genKey(){
-const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-let k="";
-for(let i=0;i<16;i++){
-k+=chars[Math.floor(Math.random()*chars.length)];
-if((i+1)%4===0 && i!==15) k+="-";
-}
-return k;
+document.getElementById(
+"error"
+).innerHTML = err.message;
+
 }
 
-/* CREAR KEY (FIX) */
-createKeyBtn.onclick = async ()=>{
+}
 
-let days = parseInt(timeSelect.value);
-if(!days){
-createStatus.innerText="Selecciona tiempo";
+// VERIFICAR ADMIN
+
+onAuthStateChanged(
+auth,
+async(user)=>{
+
+if(!user)return;
+
+if(!admins.includes(user.uid)){
+
+alert("NO ERES ADMIN");
+
 return;
+
 }
 
-let key = genKey();
-let now = Date.now();
-let exp = now + (days * 86400000);
+document.getElementById(
+"loginBox"
+).style.display = "none";
 
-await set(ref(db,"publicKeys/"+key),{
-key,
-createdAt:now,
-expiresAt:exp,
-days,
-active:true,
-used:false,
-usedBy:"",
-shared:false
+document.getElementById(
+"panel"
+).style.display = "block";
+
+cargarKeys();
+
 });
 
-createStatus.innerText="✔ Key creada: "+key;
-};
+// CARGAR KEYS
 
-/* LISTAR KEYS */
-function loadKeys(){
-onValue(ref(db,"publicKeys"),snap=>{
-keysDiv.innerHTML="";
-snap.forEach(child=>{
-let k=child.val();
+async function cargarKeys(){
 
-let div=document.createElement("div");
-div.className="card";
+container.innerHTML = "";
 
-div.innerHTML=`
-<b>${k.key}</b><br>
-Activa: ${k.active} | Usada: ${k.used}<br>
+const querySnapshot =
+await getDocs(
+collection(db,"keys")
+);
 
-<button onclick="toggle('${k.key}',${k.active})">ON/OFF</button>
-<button onclick="del('${k.key}')">Eliminar</button>
-<button onclick="add('${k.key}',1)">+1d</button>
-<button onclick="add('${k.key}',3)">+3d</button>
-<button onclick="add('${k.key}',7)">+7d</button>
+todasLasKeys = [];
+
+querySnapshot.forEach((docSnap)=>{
+
+const data =
+docSnap.data();
+
+todasLasKeys.push({
+
+id:docSnap.id,
+
+...data
+
+});
+
+});
+
+mostrarKeys(todasLasKeys);
+
+}
+
+// MOSTRAR KEYS
+
+function mostrarKeys(lista){
+
+container.innerHTML = "";
+
+lista.forEach((data)=>{
+
+container.innerHTML += `
+
+<div class="key">
+
+<h2>${data.key}</h2>
+
+<p>
+<b>Producto:</b>
+${data.producto}
+</p>
+
+<p>
+<b>Duración:</b>
+${data.duracion}
+</p>
+
+<p>
+<b>Estado:</b>
+${data.estado}
+</p>
+
+<p>
+<b>Email:</b>
+${data.email}
+</p>
+
+<p>
+<b>UID:</b>
+${data.uid}
+</p>
+
+<p>
+<b>Expira:</b>
+${data.expira}
+</p>
+
+<button
+onclick="añadirTiempo('${data.id}',7)">
+
++7 Días
+
+</button>
+
+<button
+onclick="añadirTiempo('${data.id}',30)">
+
++1 Mes
+
+</button>
+
+<button
+onclick="añadirTiempo('${data.id}',365)">
+
++1 Año
+
+</button>
+
+<button
+onclick="desactivarKey('${data.id}')">
+
+Desactivar
+
+</button>
+
+<button
+class="danger"
+onclick="eliminarKey('${data.id}')">
+
+Eliminar
+
+</button>
+
+</div>
+
 `;
 
-keysDiv.appendChild(div);
 });
-});
+
 }
 
-/* FUNCIONES */
-window.del = key => remove(ref(db,"publicKeys/"+key));
+// FILTRAR
 
-window.toggle = (key,state)=>{
-update(ref(db,"publicKeys/"+key),{active:!state});
-};
+window.filtrarKeys = function(){
 
-window.add = (key,d)=>{
-onValue(ref(db,"publicKeys/"+key),s=>{
-let v=s.val();
-update(ref(db,"publicKeys/"+key),{
-expiresAt: v.expiresAt + (d*86400000)
+const texto =
+document.getElementById(
+"buscar"
+).value.toLowerCase();
+
+const filtradas =
+todasLasKeys.filter((k)=>{
+
+return (
+
+(k.key || "")
+.toLowerCase()
+.includes(texto)
+
+||
+
+(k.email || "")
+.toLowerCase()
+.includes(texto)
+
+);
+
 });
-},{onlyOnce:true});
-};
+
+mostrarKeys(filtradas);
+
+}
+
+// AÑADIR TIEMPO
+
+window.añadirTiempo =
+async function(id,dias){
+
+const ref =
+doc(db,"keys",id);
+
+const snap =
+await getDoc(ref);
+
+const data =
+snap.data();
+
+const actual =
+new Date(data.expira);
+
+actual.setDate(
+actual.getDate()+dias
+);
+
+await updateDoc(ref,{
+
+expira:
+actual.toISOString()
+
+});
+
+alert("TIEMPO AÑADIDO");
+
+cargarKeys();
+
+}
+
+// DESACTIVAR
+
+window.desactivarKey =
+async function(id){
+
+await updateDoc(
+doc(db,"keys",id),
+{
+
+estado:"desactivada"
+
+}
+
+);
+
+cargarKeys();
+
+}
+
+// ELIMINAR
+
+window.eliminarKey =
+async function(id){
+
+const confirmar =
+confirm(
+"¿Eliminar key?"
+);
+
+if(!confirmar)return;
+
+await deleteDoc(
+doc(db,"keys",id)
+);
+
+cargarKeys();
+
+}
+
 </script>
 
 </body>
