@@ -61,13 +61,21 @@ display:none;
 </head>
 <body>
 
+<!-- LOGIN -->
+
 <div id="loginBox">
 
 <h1>ADMIN LOGIN</h1>
 
-<input type="email" id="email" placeholder="Correo admin">
+<input
+type="email"
+id="email"
+placeholder="Correo admin">
 
-<input type="password" id="password" placeholder="Contraseña">
+<input
+type="password"
+id="password"
+placeholder="Contraseña">
 
 <button onclick="login()">
 Entrar
@@ -76,6 +84,8 @@ Entrar
 <p id="error"></p>
 
 </div>
+
+<!-- PANEL -->
 
 <div id="panel">
 
@@ -156,11 +166,11 @@ document.getElementById(
 
 let todasLasKeys = [];
 
-// UID ADMIN
+// ADMINS
 
 const admins = [
 
-"PEGA_AQUI_TU_UID"
+"MHhi2cNwnJY5qf5wT7IbIkO4g9g1"
 
 ];
 
@@ -190,7 +200,8 @@ password
 
 document.getElementById(
 "error"
-).innerHTML = err.message;
+).innerHTML =
+err.message;
 
 }
 
@@ -214,11 +225,13 @@ return;
 
 document.getElementById(
 "loginBox"
-).style.display = "none";
+).style.display =
+"none";
 
 document.getElementById(
 "panel"
-).style.display = "block";
+).style.display =
+"block";
 
 cargarKeys();
 
@@ -298,6 +311,11 @@ ${data.uid}
 <p>
 <b>Expira:</b>
 ${data.expira}
+</p>
+
+<p>
+<b>Dispositivo:</b>
+${data.dispositivo}
 </p>
 
 <button
