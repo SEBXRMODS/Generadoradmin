@@ -98,8 +98,6 @@ ENTRAR
 🔥 PANEL ADMIN SEBXR MODS
 </h1>
 
-<!-- BUSCADOR -->
-
 <div class="card">
 
 <h2>
@@ -116,8 +114,6 @@ BUSCAR
 </button>
 
 </div>
-
-<!-- RESULTADOS -->
 
 <div id="resultadoUsuario"></div>
 
@@ -140,7 +136,10 @@ doc,
 getDoc,
 updateDoc,
 collection,
-getDocs
+getDocs,
+deleteDoc,
+query,
+where
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -184,23 +183,19 @@ getFirestore(app);
 window.loginAdmin =
 async function(){
 
-const email =
-document.getElementById(
-"email"
-).value;
+const emailValue =
+email.value;
 
-const password =
-document.getElementById(
-"password"
-).value;
+const passwordValue =
+password.value;
 
 try{
 
 const cred =
 await signInWithEmailAndPassword(
 auth,
-email,
-password
+emailValue,
+passwordValue
 );
 
 const uid =
@@ -223,8 +218,6 @@ alert(
 return;
 
 }
-
-// MOSTRAR PANEL
 
 loginBox.style.display =
 "none";
@@ -249,10 +242,11 @@ window.buscarUsuario =
 async function(){
 
 const valor =
-document.getElementById(
-"buscarInput"
-).value
+buscarInput.value
 .toLowerCase();
+
+resultadoUsuario.innerHTML =
+"Buscando...";
 
 const usersRef =
 collection(db,"users");
@@ -265,7 +259,7 @@ let encontrado = false;
 resultadoUsuario.innerHTML =
 "";
 
-snap.forEach((docu)=>{
+for(const docu of snap.docs){
 
 const data =
 docu.data();
@@ -273,20 +267,139 @@ docu.data();
 const uid =
 docu.id;
 
-const email =
+const correo =
 (data.email || "")
 .toLowerCase();
 
 if(
 uid.includes(valor) ||
-email.includes(valor)
+correo.includes(valor)
 ){
 
 encontrado = true;
 
+// KEYS
+
+const keysQuery =
+query(
+collection(db,"keys"),
+where("uid","==",uid)
+);
+
+const keysSnap =
+await getDocs(keysQuery);
+
+let htmlKeys = "";
+
+keysSnap.forEach((k)=>{
+
+const kd =
+k.data();
+
+htmlKeys += `
+
+<div class="card">
+
+<b>Producto:</b>
+${kd.producto}
+
+<br><br>
+
+<b>Key:</b>
+${kd.key}
+
+<br><br>
+
+<b>Duración:</b>
+${kd.duracion}
+
+<br><br>
+
+<b>Estado:</b>
+${kd.estado}
+
+<br><br>
+
+<button onclick="desactivarKey('${k.id}')">
+DESACTIVAR
+</button>
+
+<button onclick="activarKey('${k.id}')">
+ACTIVAR
+</button>
+
+<button onclick="eliminarKey('${k.id}')">
+ELIMINAR
+</button>
+
+</div>
+
+`;
+
+});
+
+if(htmlKeys == ""){
+
+htmlKeys =
+"<p>Sin keys</p>";
+
+}
+
+// HISTORIAL
+
+const comprasQuery =
+query(
+collection(db,"purchases"),
+where("uid","==",uid)
+);
+
+const comprasSnap =
+await getDocs(comprasQuery);
+
+let htmlCompras = "";
+
+comprasSnap.forEach((c)=>{
+
+const cd =
+c.data();
+
+htmlCompras += `
+
+<div class="card">
+
+<b>${cd.producto}</b>
+
+<br><br>
+
+💰 ${cd.creditos}
+ créditos
+
+<br><br>
+
+📅 ${cd.fecha}
+
+</div>
+
+`;
+
+});
+
+if(htmlCompras == ""){
+
+htmlCompras =
+"<p>Sin historial</p>";
+
+}
+
+// HTML
+
 resultadoUsuario.innerHTML += `
 
 <div class="userCard">
+
+<h2>
+👤 Usuario
+</h2>
 
 <div class="info">
 
@@ -336,13 +449,25 @@ ${data.creditos || 0}
 -500
 </button>
 
+<h2>
+🔑 Keys
+</h2>
+
+${htmlKeys}
+
+<h2>
+🧾 Historial
+</h2>
+
+${htmlCompras}
+
 </div>
 
 `;
 
 }
 
-});
+}
 
 if(!encontrado){
 
@@ -438,6 +563,59 @@ nuevos;
 
 alert(
 "CRÉDITOS QUITADOS"
+);
+
+}
+
+// DESACTIVAR KEY
+
+window.desactivarKey =
+async function(id){
+
+await updateDoc(
+doc(db,"keys",id),
+{
+
+estado:"desactivada"
+
+});
+
+alert(
+"KEY DESACTIVADA"
+);
+
+}
+
+// ACTIVAR KEY
+
+window.activarKey =
+async function(id){
+
+await updateDoc(
+doc(db,"keys",id),
+{
+
+estado:"activa"
+
+});
+
+alert(
+"KEY ACTIVADA"
+);
+
+}
+
+// ELIMINAR KEY
+
+window.eliminarKey =
+async function(id){
+
+await deleteDoc(
+doc(db,"keys",id)
+);
+
+alert(
+"KEY ELIMINADA"
 );
 
 }
