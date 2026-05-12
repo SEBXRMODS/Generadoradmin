@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin Keys</title>
+<title>Admin Sebxr Mods</title>
 
 <style>
 
@@ -14,12 +14,11 @@ padding:20px;
 margin:0;
 }
 
-h1{
+h1,h2{
 text-align:center;
-margin-bottom:30px;
 }
 
-.key{
+.card{
 background:#111;
 border:1px solid #333;
 padding:20px;
@@ -27,8 +26,18 @@ border-radius:15px;
 margin-bottom:20px;
 }
 
+input{
+width:100%;
+padding:12px;
+margin-bottom:10px;
+background:#111;
+color:white;
+border:1px solid #444;
+border-radius:10px;
+}
+
 button{
-padding:10px 15px;
+padding:12px 20px;
 border:none;
 border-radius:10px;
 background:#00ff88;
@@ -38,34 +47,28 @@ cursor:pointer;
 margin:5px;
 }
 
-.danger{
-background:red;
-color:white;
+.userCard{
+background:#151515;
+border:1px solid #333;
+padding:15px;
+border-radius:15px;
+margin-top:20px;
 }
 
-input{
-width:100%;
-padding:12px;
-margin-bottom:15px;
-background:#111;
-border:1px solid #444;
-color:white;
-border-radius:10px;
-}
-
-#panel{
-display:none;
+.info{
+margin-bottom:10px;
+word-break:break-word;
 }
 
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<div id="loginBox" class="card">
 
-<div id="loginBox">
-
-<h1>ADMIN LOGIN</h1>
+<h1>
+ADMIN PANEL
+</h1>
 
 <input
 type="email"
@@ -77,27 +80,38 @@ type="password"
 id="password"
 placeholder="Contraseña">
 
-<button onclick="login()">
-Entrar
+<button onclick="loginAdmin()">
+ENTRAR
 </button>
 
 <p id="error"></p>
 
 </div>
 
-<!-- PANEL -->
+<div id="adminPanel" style="display:none;">
 
-<div id="panel">
+<h1>
+🔥 PANEL ADMIN SEBXR MODS
+</h1>
 
-<h1>PANEL ADMIN KEYS</h1>
+<div class="card">
+
+<h2>
+Buscar usuario
+</h2>
 
 <input
 type="text"
-id="buscar"
-placeholder="Buscar key o email..."
-oninput="filtrarKeys()">
+id="buscarInput"
+placeholder="UID o correo">
 
-<div id="keysContainer"></div>
+<button onclick="buscarUsuario()">
+BUSCAR
+</button>
+
+</div>
+
+<div id="resultadoUsuario"></div>
 
 </div>
 
@@ -108,19 +122,17 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
 getAuth,
-signInWithEmailAndPassword,
-onAuthStateChanged
+signInWithEmailAndPassword
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
 getFirestore,
-collection,
-getDocs,
 doc,
+getDoc,
 updateDoc,
-deleteDoc,
-getDoc
+collection,
+getDocs
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -159,24 +171,10 @@ getAuth(app);
 const db =
 getFirestore(app);
 
-const container =
-document.getElementById(
-"keysContainer"
-);
+// LOGIN ADMIN
 
-let todasLasKeys = [];
-
-// ADMINS
-
-const admins = [
-
-"MHhi2cNwnJY5qf5wT7IbIkO4g9g1"
-
-];
-
-// LOGIN
-
-window.login = async function(){
+window.loginAdmin =
+async function(){
 
 const email =
 document.getElementById(
@@ -190,217 +188,172 @@ document.getElementById(
 
 try{
 
+const cred =
 await signInWithEmailAndPassword(
 auth,
 email,
 password
 );
 
+const uid =
+cred.user.uid;
+
+// VERIFICAR ADMIN
+
+const adminRef =
+doc(db,"admins",uid);
+
+const adminSnap =
+await getDoc(adminRef);
+
+if(!adminSnap.exists()){
+
+alert(
+"NO ERES ADMIN"
+);
+
+return;
+
+}
+
+loginBox.style.display =
+"none";
+
+adminPanel.style.display =
+"block";
+
 }catch(err){
 
-document.getElementById(
-"error"
-).innerHTML =
+error.innerHTML =
 err.message;
 
 }
 
 }
 
-// VERIFICAR ADMIN
+// BUSCAR USUARIO
 
-onAuthStateChanged(
-auth,
-async(user)=>{
+window.buscarUsuario =
+async function(){
 
-if(!user)return;
-
-if(!admins.includes(user.uid)){
-
-alert("NO ERES ADMIN");
-
-return;
-
-}
-
+const valor =
 document.getElementById(
-"loginBox"
-).style.display =
-"none";
+"buscarInput"
+).value
+.toLowerCase();
 
-document.getElementById(
-"panel"
-).style.display =
-"block";
+const usersRef =
+collection(db,"users");
 
-cargarKeys();
+const snap =
+await getDocs(usersRef);
 
-});
+let encontrado = false;
 
-// CARGAR KEYS
+resultadoUsuario.innerHTML =
+"";
 
-async function cargarKeys(){
-
-container.innerHTML = "";
-
-const querySnapshot =
-await getDocs(
-collection(db,"keys")
-);
-
-todasLasKeys = [];
-
-querySnapshot.forEach((docSnap)=>{
+snap.forEach((docu)=>{
 
 const data =
-docSnap.data();
+docu.data();
 
-todasLasKeys.push({
+const uid =
+docu.id;
 
-id:docSnap.id,
+const email =
+(data.email || "")
+.toLowerCase();
 
-...data
+if(
+uid.includes(valor) ||
+email.includes(valor)
+){
 
-});
+encontrado = true;
 
-});
+resultadoUsuario.innerHTML += `
 
-mostrarKeys(todasLasKeys);
+<div class="userCard">
 
-}
+<div class="info">
 
-// MOSTRAR KEYS
-
-function mostrarKeys(lista){
-
-container.innerHTML = "";
-
-lista.forEach((data)=>{
-
-container.innerHTML += `
-
-<div class="key">
-
-<h2>${data.key}</h2>
-
-<p>
-<b>Producto:</b>
-${data.producto}
-</p>
-
-<p>
-<b>Duración:</b>
-${data.duracion}
-</p>
-
-<p>
-<b>Estado:</b>
-${data.estado}
-</p>
-
-<p>
-<b>Email:</b>
+<b>Email:</b><br>
 ${data.email}
-</p>
 
-<p>
-<b>UID:</b>
-${data.uid}
-</p>
+</div>
 
-<p>
-<b>Expira:</b>
-${data.expira}
-</p>
+<div class="info">
 
-<p>
-<b>Dispositivo:</b>
-${data.dispositivo}
-</p>
+<b>UID:</b><br>
+${uid}
 
-<button
-onclick="añadirTiempo('${data.id}',7)">
+</div>
 
-+7 Días
+<div class="info">
 
+<b>Créditos:</b><br>
+<span id="creditos-${uid}">
+${data.creditos || 0}
+</span>
+
+</div>
+
+<button onclick="sumarCreditos('${uid}',100)">
++100
 </button>
 
-<button
-onclick="añadirTiempo('${data.id}',30)">
-
-+1 Mes
-
+<button onclick="sumarCreditos('${uid}',500)">
++500
 </button>
 
-<button
-onclick="añadirTiempo('${data.id}',365)">
-
-+1 Año
-
+<button onclick="sumarCreditos('${uid}',1000)">
++1000
 </button>
 
-<button
-onclick="desactivarKey('${data.id}')">
+<br>
 
-Desactivar
-
+<button onclick="restarCreditos('${uid}',100)">
+-100
 </button>
 
-<button
-class="danger"
-onclick="eliminarKey('${data.id}')">
-
-Eliminar
-
+<button onclick="restarCreditos('${uid}',500)">
+-500
 </button>
 
 </div>
 
 `;
 
-});
-
 }
-
-// FILTRAR
-
-window.filtrarKeys = function(){
-
-const texto =
-document.getElementById(
-"buscar"
-).value.toLowerCase();
-
-const filtradas =
-todasLasKeys.filter((k)=>{
-
-return (
-
-(k.key || "")
-.toLowerCase()
-.includes(texto)
-
-||
-
-(k.email || "")
-.toLowerCase()
-.includes(texto)
-
-);
 
 });
 
-mostrarKeys(filtradas);
+if(!encontrado){
+
+resultadoUsuario.innerHTML =
+
+`
+
+<div class="card">
+
+Usuario no encontrado
+
+</div>
+
+`;
 
 }
 
-// AÑADIR TIEMPO
+}
 
-window.añadirTiempo =
-async function(id,dias){
+// SUMAR CREDITOS
+
+window.sumarCreditos =
+async function(uid,cantidad){
 
 const ref =
-doc(db,"keys",id);
+doc(db,"users",uid);
 
 const snap =
 await getDoc(ref);
@@ -408,62 +361,69 @@ await getDoc(ref);
 const data =
 snap.data();
 
-const actual =
-new Date(data.expira);
+const actuales =
+Number(data.creditos)||0;
 
-actual.setDate(
-actual.getDate()+dias
-);
+const nuevos =
+actuales + cantidad;
 
 await updateDoc(ref,{
 
-expira:
-actual.toISOString()
+creditos:nuevos
 
 });
 
-alert("TIEMPO AÑADIDO");
+document.getElementById(
+`creditos-${uid}`
+).innerHTML =
+nuevos;
 
-cargarKeys();
+alert(
+"CRÉDITOS AÑADIDOS"
+);
 
 }
 
-// DESACTIVAR
+// RESTAR CREDITOS
 
-window.desactivarKey =
-async function(id){
+window.restarCreditos =
+async function(uid,cantidad){
 
-await updateDoc(
-doc(db,"keys",id),
-{
+const ref =
+doc(db,"users",uid);
 
-estado:"desactivada"
+const snap =
+await getDoc(ref);
+
+const data =
+snap.data();
+
+const actuales =
+Number(data.creditos)||0;
+
+let nuevos =
+actuales - cantidad;
+
+if(nuevos < 0){
+
+nuevos = 0;
 
 }
 
+await updateDoc(ref,{
+
+creditos:nuevos
+
+});
+
+document.getElementById(
+`creditos-${uid}`
+).innerHTML =
+nuevos;
+
+alert(
+"CRÉDITOS QUITADOS"
 );
-
-cargarKeys();
-
-}
-
-// ELIMINAR
-
-window.eliminarKey =
-async function(id){
-
-const confirmar =
-confirm(
-"¿Eliminar key?"
-);
-
-if(!confirmar)return;
-
-await deleteDoc(
-doc(db,"keys",id)
-);
-
-cargarKeys();
 
 }
 
