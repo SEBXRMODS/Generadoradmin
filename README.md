@@ -53,16 +53,18 @@ border:1px solid #333;
 padding:15px;
 border-radius:15px;
 margin-top:20px;
+word-break:break-word;
 }
 
 .info{
 margin-bottom:10px;
-word-break:break-word;
 }
 
 </style>
 </head>
 <body>
+
+<!-- LOGIN -->
 
 <div id="loginBox" class="card">
 
@@ -88,11 +90,15 @@ ENTRAR
 
 </div>
 
+<!-- PANEL -->
+
 <div id="adminPanel" style="display:none;">
 
 <h1>
 🔥 PANEL ADMIN SEBXR MODS
 </h1>
+
+<!-- BUSCADOR -->
 
 <div class="card">
 
@@ -111,7 +117,25 @@ BUSCAR
 
 </div>
 
+<!-- RESULTADOS -->
+
 <div id="resultadoUsuario"></div>
+
+<!-- ONLINE USERS -->
+
+<div class="card">
+
+<h2>
+🟢 Usuarios Online
+</h2>
+
+<div id="onlineUsersBox">
+
+Cargando...
+
+</div>
+
+</div>
 
 </div>
 
@@ -132,7 +156,8 @@ doc,
 getDoc,
 updateDoc,
 collection,
-getDocs
+getDocs,
+onSnapshot
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -170,6 +195,60 @@ getAuth(app);
 
 const db =
 getFirestore(app);
+
+// ONLINE USERS REALTIME
+
+const onlineRef =
+collection(db,"onlineUsers");
+
+onSnapshot(
+onlineRef,
+(snapshot)=>{
+
+let html = "";
+
+snapshot.forEach((docu)=>{
+
+const data =
+docu.data();
+
+html += `
+
+<div class="userCard">
+
+<b>
+${data.email}
+</b>
+
+<br><br>
+
+🖥 ${data.device}
+
+<br><br>
+
+🟢 ONLINE
+
+<br><br>
+
+🕒 ${data.lastSeen}
+
+</div>
+
+`;
+
+});
+
+if(html == ""){
+
+html =
+"Nadie conectado";
+
+}
+
+onlineUsersBox.innerHTML =
+html;
+
+});
 
 // LOGIN ADMIN
 
@@ -279,6 +358,7 @@ resultadoUsuario.innerHTML += `
 <div class="info">
 
 <b>Email:</b><br>
+
 ${data.email}
 
 </div>
@@ -286,6 +366,7 @@ ${data.email}
 <div class="info">
 
 <b>UID:</b><br>
+
 ${uid}
 
 </div>
@@ -293,6 +374,7 @@ ${uid}
 <div class="info">
 
 <b>Créditos:</b><br>
+
 <span id="creditos-${uid}">
 ${data.creditos || 0}
 </span>
