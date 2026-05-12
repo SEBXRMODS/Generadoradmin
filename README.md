@@ -121,22 +121,6 @@ BUSCAR
 
 <div id="resultadoUsuario"></div>
 
-<!-- ONLINE USERS -->
-
-<div class="card">
-
-<h2>
-🟢 Usuarios Online
-</h2>
-
-<div id="onlineUsersBox">
-
-Cargando...
-
-</div>
-
-</div>
-
 </div>
 
 <script type="module">
@@ -156,8 +140,7 @@ doc,
 getDoc,
 updateDoc,
 collection,
-getDocs,
-onSnapshot
+getDocs
 }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -248,60 +231,6 @@ loginBox.style.display =
 
 adminPanel.style.display =
 "block";
-
-// ONLINE USERS
-
-const onlineRef =
-collection(db,"onlineUsers");
-
-onSnapshot(
-onlineRef,
-(snapshot)=>{
-
-let html = "";
-
-snapshot.forEach((docu)=>{
-
-const data =
-docu.data();
-
-html += `
-
-<div class="userCard">
-
-<b>
-${data.email}
-</b>
-
-<br><br>
-
-🖥 ${data.device}
-
-<br><br>
-
-🟢 ONLINE
-
-<br><br>
-
-🕒 ${data.lastSeen}
-
-</div>
-
-`;
-
-});
-
-if(html == ""){
-
-html =
-"Nadie conectado";
-
-}
-
-onlineUsersBox.innerHTML =
-html;
-
-});
 
 }catch(err){
 
