@@ -196,7 +196,60 @@ getAuth(app);
 const db =
 getFirestore(app);
 
-// ONLINE USERS REALTIME
+// LOGIN ADMIN
+
+window.loginAdmin =
+async function(){
+
+const email =
+document.getElementById(
+"email"
+).value;
+
+const password =
+document.getElementById(
+"password"
+).value;
+
+try{
+
+const cred =
+await signInWithEmailAndPassword(
+auth,
+email,
+password
+);
+
+const uid =
+cred.user.uid;
+
+// VERIFICAR ADMIN
+
+const adminRef =
+doc(db,"admins",uid);
+
+const adminSnap =
+await getDoc(adminRef);
+
+if(!adminSnap.exists()){
+
+alert(
+"NO ERES ADMIN"
+);
+
+return;
+
+}
+
+// MOSTRAR PANEL
+
+loginBox.style.display =
+"none";
+
+adminPanel.style.display =
+"block";
+
+// ONLINE USERS
 
 const onlineRef =
 collection(db,"onlineUsers");
@@ -250,58 +303,9 @@ html;
 
 });
 
-// LOGIN ADMIN
-
-window.loginAdmin =
-async function(){
-
-const email =
-document.getElementById(
-"email"
-).value;
-
-const password =
-document.getElementById(
-"password"
-).value;
-
-try{
-
-const cred =
-await signInWithEmailAndPassword(
-auth,
-email,
-password
-);
-
-const uid =
-cred.user.uid;
-
-// VERIFICAR ADMIN
-
-const adminRef =
-doc(db,"admins",uid);
-
-const adminSnap =
-await getDoc(adminRef);
-
-if(!adminSnap.exists()){
-
-alert(
-"NO ERES ADMIN"
-);
-
-return;
-
-}
-
-loginBox.style.display =
-"none";
-
-adminPanel.style.display =
-"block";
-
 }catch(err){
+
+console.log(err);
 
 error.innerHTML =
 err.message;
